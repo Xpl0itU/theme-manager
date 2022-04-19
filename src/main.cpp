@@ -23,6 +23,7 @@
 int entrycount = 0;
 int cursorPosition = 0;
 bool isInstalling = false;
+bool isBackup = false;
 std::string themesPath = "/vol/external01/wiiu/themes/";
 
 VPADStatus status;
@@ -184,6 +185,62 @@ void clearBuffers() {
     flipBuffers();
 }
 
+void header() {
+    if(isBackup) {
+        console_print_pos(0, 0, "Backup current theme...");
+        console_print_pos(0, 1, "----------------------------------------------------------------------------");
+        console_print_pos(0, 2, "Please wait...");
+        console_print_pos(0, 3, "----------------------------------------------------------------------------");
+    } else if(isInstalling) {
+        console_print_pos(0, 0, "Installing theme...");
+        console_print_pos(0, 1, "----------------------------------------------------------------------------");
+        console_print_pos(0, 2, "Please wait...");
+        console_print_pos(0, 3, "----------------------------------------------------------------------------");
+    } else {
+        console_print_pos(0, 0, "Select a theme:");
+        console_print_pos(40, 0, "R: backup current theme");
+        console_print_pos(0, 1, "----------------------------------------------------------------------------");
+    }
+}
+
+int checkEntry(const char *fPath) {
+    struct stat st;
+    if (stat(fPath, &st) == -1)
+        return 0;
+
+    if (S_ISDIR(st.st_mode))
+        return 2;
+    
+    return 1;
+}
+
+int mkdir_p(const char *fPath) { //Adapted from mkdir_p made by JonathonReinhart
+    std::string _path;
+    char *p;
+    int found = 0;
+
+    _path.assign(fPath);
+
+    for (p = (char *) _path.c_str() + 1; *p != 0; p++) {
+        if (*p == '/') {
+            found++;
+            if (found > 2) {
+                *p = '\0';
+                if (checkEntry(_path.c_str()) == 0)
+                    if (mkdir(_path.c_str(), DEFFILEMODE) == -1)
+                        return -1;
+                *p = '/';
+            }
+        }
+    }
+
+    if (checkEntry(_path.c_str()) == 0)
+        if (mkdir(_path.c_str(), DEFFILEMODE) == -1)
+            return -1;
+
+    return 0;
+}
+
 int main() {
     WHBProcInit();
 
@@ -238,11 +295,12 @@ int main() {
         VPADRead(VPAD_CHAN_0, &status, 1, &error);
 
         clearBuffersEx();
+        header();
 
         for (int a = 0; a < entrycount; ++a)
-            console_print_pos(1, a, themes[a].c_str());
+            console_print_pos(1, a + 3, themes[a].c_str());
 
-        console_print_pos(0, cursorPosition, ">");
+        console_print_pos(0, cursorPosition + 3, ">");
 
         if (status.trigger & VPAD_BUTTON_DOWN)
             ++cursorPosition;
@@ -252,34 +310,58 @@ int main() {
 
         if (status.trigger & VPAD_BUTTON_A)
             isInstalling = true;
+        
+        if (status.trigger & VPAD_BUTTON_R)
+            isBackup = true;
+        
+        if(isBackup) {
+            if(!isInstalling) {
+                clearBuffersEx();
+                header();
+                console_print_pos(0, 5, "Backing up Men.pack");
+                flipBuffers();
+                mkdir_p((themesPath + "backup").c_str());
+                copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack");
+                clearBuffersEx();
+                header();
+                console_print_pos(0, 5, "Backing up Men2.pack");
+                flipBuffers();
+                copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack");
+                isBackup = false;
+            }
+        }
 
         if (isInstalling) {
             clearBuffersEx();
-            console_print_pos(0, 0, "Copying Men.pack");
+            header();
+            console_print_pos(0, 5, "Copying Men.pack");
             flipBuffers();
             if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") == 0) {
                 clearBuffersEx();
-                console_print_pos(0, 0, "Men.pack copied successfully");
+                header();
                 flipBuffers();
             } else {
                 clearBuffersEx();
-                console_print_pos(0, 0, "Men.pack error");
+                header();
+                console_print_pos(0, 5, "Men.pack error");
                 flipBuffers();
                 sleep(2);
-                isInstalling = false;
             }
             clearBuffersEx();
-            console_print_pos(0, 0, "Copying Men2.pack");
+            header();
+            console_print_pos(0, 5, "Copying Men2.pack");
             flipBuffers();
             if (copyFile(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") == 0) {
                 clearBuffersEx();
-                console_print_pos(0, 0, "Theme installed.");
+                header();
+                console_print_pos(0, 5, "Theme installed.");
                 flipBuffers();
                 sleep(2);
                 isInstalling = false;
             } else {
                 clearBuffersEx();
-                console_print_pos(0, 0, "Men2.pack error");
+                header();
+                console_print_pos(0, 5, "Men2.pack error");
                 flipBuffers();
                 sleep(2);
                 isInstalling = false;
