@@ -331,6 +331,8 @@ int main() {
                     flipBuffers();
                     sleep(2);
                 }
+                clearBuffersEx();
+                header();
                 console_print_pos(0, 5, "Backing up Men2.pack");
                 flipBuffers();
                 if(copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") == 0) {
