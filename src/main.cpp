@@ -321,12 +321,28 @@ int main() {
                 console_print_pos(0, 5, "Backing up Men.pack");
                 flipBuffers();
                 mkdir_p((themesPath + "backup").c_str());
-                copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack");
-                clearBuffersEx();
-                header();
+                if(copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") == 0) {
+                    clearBuffersEx();
+                    header();
+                } else {
+                    clearBuffersEx();
+                    header();
+                    console_print_pos(0, 5, "Men.pack error");
+                    flipBuffers();
+                    sleep(2);
+                }
                 console_print_pos(0, 5, "Backing up Men2.pack");
                 flipBuffers();
-                copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack");
+                if(copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") == 0) {
+                    clearBuffersEx();
+                    header();
+                } else {
+                    clearBuffersEx();
+                    header();
+                    console_print_pos(0, 5, "Men2.pack error");
+                    flipBuffers();
+                    sleep(2);
+                }
                 isBackup = false;
             }
         }
@@ -354,6 +370,7 @@ int main() {
             if (copyFile(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") == 0) {
                 clearBuffersEx();
                 header();
+                IOSUHAX_FSA_FlushVolume(fsaFd, "/vol/storage_mlc01");
                 console_print_pos(0, 5, "Theme installed.");
                 flipBuffers();
                 sleep(2);
