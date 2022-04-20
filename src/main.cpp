@@ -1,11 +1,9 @@
 #include <atomic>
 #include <cstring>
-#include <dirent.h>
 #include <malloc.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <string>
 #include <unistd.h>
 #include <vector>
 
@@ -15,8 +13,7 @@
 #include <whb/proc.h>
 #include <whb/sdcard.h>
 
-#include <iosuhax.h>
-#include <iosuhax_devoptab.h>
+#include "hash.h"
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
@@ -62,31 +59,6 @@ void console_print_pos(int x, int y, const char *format, ...) { // Source: ftpii
         free(tmp);
 }
 
-bool replace(std::string &str, const std::string &from, const std::string &to) {
-    size_t start_pos = str.find(from);
-    if (start_pos == std::string::npos)
-        return false;
-    str.replace(start_pos, from.length(), to);
-    return true;
-}
-
-static std::string newlibToFSA(std::string path) {
-    if (path[3] == ':') {
-        switch (path[0]) {
-            case 'u':
-                replace(path, "usb:", "/vol/storage_usb01");
-                break;
-            case 'm':
-                replace(path, "mlc:", "/vol/storage_mlc01");
-                break;
-            case 's':
-                replace(path, "slc:", "/vol/storage_slccmpt01");
-                break;
-        }
-    }
-    return path;
-}
-
 std::vector<std::string> files(std::string path) {
     std::vector<std::string> files;
     int dir_ = opendir(path.c_str());
@@ -99,48 +71,6 @@ std::vector<std::string> files(std::string path) {
     }
 
     return files;
-}
-
-int copyFile(std::string pPath, std::string oPath) {
-    FILE *source = fopen(pPath.c_str(), "rb");
-    if (source == nullptr)
-        return -1;
-
-    FILE *dest = fopen(oPath.c_str(), "wb");
-    if (dest == nullptr) {
-        fclose(source);
-        return -1;
-    }
-
-    char *buffer[3];
-    for (int i = 0; i < 3; i++) {
-        buffer[i] = (char *) aligned_alloc(0x40, IO_MAX_FILE_BUFFER);
-        if (buffer[i] == nullptr) {
-            fclose(source);
-            fclose(dest);
-            for (i--; i >= 0; i--)
-                free(buffer[i]);
-
-            return -1;
-        }
-    }
-
-    setvbuf(source, buffer[0], _IOFBF, IO_MAX_FILE_BUFFER);
-    setvbuf(dest, buffer[1], _IOFBF, IO_MAX_FILE_BUFFER);
-    int size = 0;
-    int bytesWritten = 0;
-
-    while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0) {
-        bytesWritten = fwrite(buffer[2], 1, size, dest);
-    }
-    fclose(source);
-    fclose(dest);
-    for (int i = 0; i < 3; i++)
-        free(buffer[i]);
-
-    IOSUHAX_FSA_ChangeMode(fsaFd, newlibToFSA(oPath).c_str(), 0x644);
-
-    return 0;
 }
 
 void promptError(const char *message, ...) {
@@ -188,24 +118,24 @@ void clearBuffers() {
 void header() {
     if(isBackup) {
         console_print_pos(0, 0, "Backup current theme...");
-        console_print_pos(0, 1, "----------------------------------------------------------------------------");
+        console_print_pos(0, 1, "----------------------------------------------------------------------");
         console_print_pos(0, 2, "Please wait...");
-        console_print_pos(0, 3, "----------------------------------------------------------------------------");
+        console_print_pos(0, 3, "----------------------------------------------------------------------");
     } else if(isInstalling) {
         console_print_pos(0, 0, "Installing theme...");
-        console_print_pos(0, 1, "----------------------------------------------------------------------------");
+        console_print_pos(0, 1, "----------------------------------------------------------------------");
         console_print_pos(0, 2, "Please wait...");
-        console_print_pos(0, 3, "----------------------------------------------------------------------------");
+        console_print_pos(0, 3, "----------------------------------------------------------------------");
     } else {
         console_print_pos(0, 0, "Select a theme:");
         console_print_pos(40, 0, "R: backup current theme");
-        console_print_pos(0, 1, "----------------------------------------------------------------------------");
+        console_print_pos(0, 1, "----------------------------------------------------------------------");
     }
 }
 
-int checkEntry(const char *fPath) {
+int checkEntry(std::string fPath) {
     struct stat st;
-    if (stat(fPath, &st) == -1)
+    if (stat(fPath.c_str(), &st) == -1)
         return 0;
 
     if (S_ISDIR(st.st_mode))
@@ -226,7 +156,7 @@ int mkdir_p(const char *fPath) { //Adapted from mkdir_p made by JonathonReinhart
             found++;
             if (found > 2) {
                 *p = '\0';
-                if (checkEntry(_path.c_str()) == 0)
+                if (checkEntry(_path) == 0)
                     if (mkdir(_path.c_str(), DEFFILEMODE) == -1)
                         return -1;
                 *p = '/';
@@ -234,11 +164,83 @@ int mkdir_p(const char *fPath) { //Adapted from mkdir_p made by JonathonReinhart
         }
     }
 
-    if (checkEntry(_path.c_str()) == 0)
+    if (checkEntry(_path) == 0)
         if (mkdir(_path.c_str(), DEFFILEMODE) == -1)
             return -1;
 
     return 0;
+}
+
+void backup() {
+    clearBuffersEx();
+    header();
+    console_print_pos(0, 5, "Backing up Men.pack");
+    flipBuffers();
+    mkdir_p((themesPath + "backup").c_str());
+    if(copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") == 0) {
+        clearBuffersEx();
+        header();
+    } else {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men.pack error");
+        flipBuffers();
+        sleep(2);
+    }
+    clearBuffersEx();
+    header();
+    console_print_pos(0, 5, "Backing up Men2.pack");
+    flipBuffers();
+    if(copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") == 0) {
+        clearBuffersEx();
+        header();
+    } else {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men2.pack error");
+        flipBuffers();
+        sleep(2);
+    }
+
+    clearBuffersEx();
+    header();
+    console_print_pos(0, 5, "Checking Men.pack");
+    if(hashFiles(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men.pack hash error");
+        flipBuffers();
+        sleep(2);
+    }
+
+    clearBuffersEx();
+    header();
+    console_print_pos(0, 5, "Checking Men2.pack");
+    if(hashFiles(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men2.pack hash error");
+        flipBuffers();
+        sleep(2);
+    }
+    isBackup = false;
+}
+
+int checkBackup() {
+    if((checkEntry(themesPath + "backup/") == 2) && (checkEntry(themesPath + "backup/Men.pack") == 1) && (checkEntry(themesPath + "backup/Men2.pack") == 1))
+        return 0;
+    return -1;
+}
+
+void warning() {
+    clearBuffersEx();
+    console_print_pos(0, 0, "WARNING");
+    console_print_pos(0, 1, "----------------------------------------------------------------------");
+    console_print_pos(0, 2, "INSTALLING THEMES IS DANGEROUS, CONTINUE AT YOUR OWN RISK");
+    console_print_pos(0, 3, "A BAD THEME MAY LEAD TO A (RECOVERABLE) BRICK");
+    console_print_pos(0, 4, "----------------------------------------------------------------------");
+    flipBuffers();
+    sleep(5);
 }
 
 int main() {
@@ -274,7 +276,7 @@ int main() {
         return 0;
     }
 
-    int fsaFd = IOSUHAX_FSA_Open();
+    fsaFd = IOSUHAX_FSA_Open();
     if (fsaFd < 0) {
         promptError("IOSUHAX_FSA_Open failed.");
         return 0;
@@ -290,6 +292,8 @@ int main() {
         menuPath = "mlc:/sys/title/00050010/10040100";
     else if (dirExists("mlc:/sys/title/00050010/10040000"))
         menuPath = "mlc:/sys/title/00050010/10040000";
+
+    warning();
 
     while (WHBProcIsRunning()) {
         VPADRead(VPAD_CHAN_0, &status, 1, &error);
@@ -314,42 +318,14 @@ int main() {
         if (status.trigger & VPAD_BUTTON_R)
             isBackup = true;
         
-        if(isBackup) {
-            if(!isInstalling) {
-                clearBuffersEx();
-                header();
-                console_print_pos(0, 5, "Backing up Men.pack");
-                flipBuffers();
-                mkdir_p((themesPath + "backup").c_str());
-                if(copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") == 0) {
-                    clearBuffersEx();
-                    header();
-                } else {
-                    clearBuffersEx();
-                    header();
-                    console_print_pos(0, 5, "Men.pack error");
-                    flipBuffers();
-                    sleep(2);
-                }
-                clearBuffersEx();
-                header();
-                console_print_pos(0, 5, "Backing up Men2.pack");
-                flipBuffers();
-                if(copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") == 0) {
-                    clearBuffersEx();
-                    header();
-                } else {
-                    clearBuffersEx();
-                    header();
-                    console_print_pos(0, 5, "Men2.pack error");
-                    flipBuffers();
-                    sleep(2);
-                }
-                isBackup = false;
-            }
-        }
+        if(isBackup)
+            if(!isInstalling)
+                backup();
 
         if (isInstalling) {
+            clearBuffersEx();
+            if(checkBackup() != 0)
+                backup();
             clearBuffersEx();
             header();
             console_print_pos(0, 5, "Copying Men.pack");
@@ -376,7 +352,6 @@ int main() {
                 console_print_pos(0, 5, "Theme installed.");
                 flipBuffers();
                 sleep(2);
-                isInstalling = false;
             } else {
                 clearBuffersEx();
                 header();
@@ -385,6 +360,28 @@ int main() {
                 sleep(2);
                 isInstalling = false;
             }
+
+            header();
+            console_print_pos(0, 5, "Checking Men.pack");
+            if(hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
+                clearBuffersEx();
+                header();
+                console_print_pos(0, 5, "Men.pack hash error");
+                flipBuffers();
+                sleep(2);
+            }
+
+            clearBuffersEx();
+            header();
+            console_print_pos(0, 5, "Checking Men2.pack");
+            if(hashFiles(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") != 0) {
+                clearBuffersEx();
+                header();
+                console_print_pos(0, 5, "Men2.pack hash error");
+                flipBuffers();
+                sleep(2);
+            }
+            isInstalling = false;
         }
 
         if (cursorPosition < 0)
