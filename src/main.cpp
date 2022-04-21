@@ -21,7 +21,9 @@ int entrycount = 0;
 int cursorPosition = 0;
 bool isInstalling = false;
 bool isBackup = false;
+
 std::string themesPath = "/vol/external01/wiiu/themes/";
+std::vector<std::string> themes;
 
 VPADStatus status;
 VPADReadError error;
@@ -78,7 +80,7 @@ void console_print_pos(int x, int y, const char *format, ...) { // Source: ftpii
 
 std::vector<std::string> files(std::string path) {
     std::vector<std::string> files;
-    DIR* dir_ = opendir(path.c_str());
+    DIR *dir_ = opendir(path.c_str());
     struct dirent *ent;
     while ((ent = readdir(dir_)) != NULL) {
         if (ent->d_type == DT_DIR) { // regular file
@@ -107,12 +109,12 @@ void promptError(const char *message, ...) {
 }
 
 void header() {
-    if(isBackup) {
+    if (isBackup) {
         console_print_pos(0, 0, "Backup current theme...");
         console_print_pos(0, 1, "----------------------------------------------------------------------");
         console_print_pos(0, 2, "Please wait...");
         console_print_pos(0, 3, "----------------------------------------------------------------------");
-    } else if(isInstalling) {
+    } else if (isInstalling) {
         console_print_pos(0, 0, "Installing theme...");
         console_print_pos(0, 1, "----------------------------------------------------------------------");
         console_print_pos(0, 2, "Please wait...");
@@ -124,6 +126,29 @@ void header() {
     }
 }
 
+void check() {
+    header();
+    console_print_pos(0, 5, "Checking Men.pack");
+    if (hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men.pack hash error");
+        flipBuffers();
+        sleep(2);
+    }
+
+    clearBuffersEx();
+    header();
+    console_print_pos(0, 5, "Checking Men2.pack");
+    if (hashFiles(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") != 0) {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men2.pack hash error");
+        flipBuffers();
+        sleep(2);
+    }
+}
+
 int checkEntry(std::string fPath) {
     struct stat st;
     if (stat(fPath.c_str(), &st) == -1)
@@ -131,7 +156,7 @@ int checkEntry(std::string fPath) {
 
     if (S_ISDIR(st.st_mode))
         return 2;
-    
+
     return 1;
 }
 
@@ -162,13 +187,19 @@ int mkdir_p(const char *fPath) { //Adapted from mkdir_p made by JonathonReinhart
     return 0;
 }
 
+int checkBackup() {
+    if ((checkEntry(themesPath + "backup/") == 2) && (checkEntry(themesPath + "backup/Men.pack") == 1) && (checkEntry(themesPath + "backup/Men2.pack") == 1))
+        return 0;
+    return -1;
+}
+
 void backup() {
     clearBuffersEx();
     header();
     console_print_pos(0, 5, "Backing up Men.pack");
     flipBuffers();
     mkdir_p((themesPath + "backup").c_str());
-    if(copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") == 0) {
+    if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") == 0) {
         clearBuffersEx();
         header();
     } else {
@@ -182,7 +213,7 @@ void backup() {
     header();
     console_print_pos(0, 5, "Backing up Men2.pack");
     flipBuffers();
-    if(copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") == 0) {
+    if (copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") == 0) {
         clearBuffersEx();
         header();
     } else {
@@ -196,7 +227,7 @@ void backup() {
     clearBuffersEx();
     header();
     console_print_pos(0, 5, "Checking Men.pack");
-    if(hashFiles(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
+    if (hashFiles(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
         clearBuffersEx();
         header();
         console_print_pos(0, 5, "Men.pack hash error");
@@ -207,7 +238,7 @@ void backup() {
     clearBuffersEx();
     header();
     console_print_pos(0, 5, "Checking Men2.pack");
-    if(hashFiles(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
+    if (hashFiles(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
         clearBuffersEx();
         header();
         console_print_pos(0, 5, "Men2.pack hash error");
@@ -217,10 +248,43 @@ void backup() {
     isBackup = false;
 }
 
-int checkBackup() {
-    if((checkEntry(themesPath + "backup/") == 2) && (checkEntry(themesPath + "backup/Men.pack") == 1) && (checkEntry(themesPath + "backup/Men2.pack") == 1))
-        return 0;
-    return -1;
+void install() {
+    clearBuffersEx();
+    if (checkBackup() != 0)
+        backup();
+    clearBuffersEx();
+    header();
+    console_print_pos(0, 5, "Copying Men.pack");
+    flipBuffers();
+    if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") == 0) {
+        clearBuffersEx();
+        header();
+        flipBuffers();
+    } else {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men.pack error");
+        flipBuffers();
+        sleep(2);
+    }
+    clearBuffersEx();
+    header();
+    console_print_pos(0, 5, "Copying Men2.pack");
+    flipBuffers();
+    if (copyFile(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") == 0) {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Theme installed.");
+        flipBuffers();
+        sleep(2);
+    } else {
+        clearBuffersEx();
+        header();
+        console_print_pos(0, 5, "Men2.pack error");
+        flipBuffers();
+        sleep(2);
+        isInstalling = false;
+    }
 }
 
 void warning() {
@@ -275,7 +339,7 @@ int main() {
 
     WHBMountSdCard();
     mount_fs("mlc", fsaFd, NULL, "/vol/storage_mlc01");
-    std::vector<std::string> themes = files(themesPath);
+    themes = files(themesPath);
 
     if (dirExists("mlc:/sys/title/00050010/10040200"))
         menuPath = "mlc:/sys/title/00050010/10040200";
@@ -305,73 +369,18 @@ int main() {
 
         if (status.trigger & VPAD_BUTTON_A)
             isInstalling = true;
-        
+
         if (status.trigger & VPAD_BUTTON_R)
             isBackup = true;
-        
-        if(isBackup)
-            if(!isInstalling)
+
+        if (isBackup)
+            if (!isInstalling)
                 backup();
 
         if (isInstalling) {
-            clearBuffersEx();
-            if(checkBackup() != 0)
-                backup();
-            clearBuffersEx();
-            header();
-            console_print_pos(0, 5, "Copying Men.pack");
-            flipBuffers();
-            if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") == 0) {
-                clearBuffersEx();
-                header();
-                flipBuffers();
-            } else {
-                clearBuffersEx();
-                header();
-                console_print_pos(0, 5, "Men.pack error");
-                flipBuffers();
-                sleep(2);
-            }
-            clearBuffersEx();
-            header();
-            console_print_pos(0, 5, "Copying Men2.pack");
-            flipBuffers();
-            if (copyFile(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") == 0) {
-                clearBuffersEx();
-                header();
-                IOSUHAX_FSA_FlushVolume(fsaFd, "/vol/storage_mlc01");
-                console_print_pos(0, 5, "Theme installed.");
-                flipBuffers();
-                sleep(2);
-            } else {
-                clearBuffersEx();
-                header();
-                console_print_pos(0, 5, "Men2.pack error");
-                flipBuffers();
-                sleep(2);
-                isInstalling = false;
-            }
-
-            header();
-            console_print_pos(0, 5, "Checking Men.pack");
-            if(hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
-                clearBuffersEx();
-                header();
-                console_print_pos(0, 5, "Men.pack hash error");
-                flipBuffers();
-                sleep(2);
-            }
-
-            clearBuffersEx();
-            header();
-            console_print_pos(0, 5, "Checking Men2.pack");
-            if(hashFiles(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") != 0) {
-                clearBuffersEx();
-                header();
-                console_print_pos(0, 5, "Men2.pack hash error");
-                flipBuffers();
-                sleep(2);
-            }
+            install();
+            IOSUHAX_FSA_FlushVolume(fsaFd, "/vol/storage_mlc01");
+            check();
             isInstalling = false;
         }
 

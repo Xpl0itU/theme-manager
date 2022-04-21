@@ -56,7 +56,7 @@ int copyFile(std::string pPath, std::string oPath) {
     int size = 0;
 
     while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0) {
-         fwrite(buffer[2], 1, size, dest);
+        fwrite(buffer[2], 1, size, dest);
     }
     fclose(source);
     fclose(dest);
@@ -88,13 +88,13 @@ int32_t loadFile(const char *fPath, uint8_t **buf) {
     return ret;
 }
 
-int32_t hashFiles(std::string file1, std::string file2) {
-    uint8_t *file1Buf;
-    uint8_t *file2Buf;
+int hashFiles(std::string file1, std::string file2) {
+    uint8_t *file1Buf = (uint8_t *) malloc(sizeof(uint8_t));
+    uint8_t *file2Buf = (uint8_t *) malloc(sizeof(uint8_t));
     loadFile(file1.c_str(), &file1Buf);
     loadFile(file2.c_str(), &file2Buf);
     std::hash<uint8_t> ptr_hash;
-    if(ptr_hash(*file1Buf) == ptr_hash(*file2Buf)) {
+    if (ptr_hash(*file1Buf) == ptr_hash(*file2Buf)) {
         free(file1Buf);
         free(file2Buf);
         return 0;
