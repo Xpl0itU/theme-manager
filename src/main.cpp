@@ -35,7 +35,24 @@ int fsaFd;
 
 std::string menuPath;
 
-// check if a directory exists
+void flipBuffers() {
+    DCFlushRange(tvBuffer, tvBufferSize);
+    DCFlushRange(drcBuffer, drcBufferSize);
+
+    OSScreenFlipBuffersEx(SCREEN_TV);
+    OSScreenFlipBuffersEx(SCREEN_DRC);
+}
+
+void clearBuffersEx() {
+    OSScreenClearBufferEx(SCREEN_TV, 0x00000000);
+    OSScreenClearBufferEx(SCREEN_DRC, 0x00000000);
+}
+
+void clearBuffers() {
+    clearBuffersEx();
+    flipBuffers();
+}
+
 bool dirExists(const char *dir) {
     DIR *d = opendir(dir);
     if (d) {
@@ -61,7 +78,7 @@ void console_print_pos(int x, int y, const char *format, ...) { // Source: ftpii
 
 std::vector<std::string> files(std::string path) {
     std::vector<std::string> files;
-    int dir_ = opendir(path.c_str());
+    DIR* dir_ = opendir(path.c_str());
     struct dirent *ent;
     while ((ent = readdir(dir_)) != NULL) {
         if (ent->d_type == DT_DIR) { // regular file
@@ -74,14 +91,7 @@ std::vector<std::string> files(std::string path) {
 }
 
 void promptError(const char *message, ...) {
-    OSScreenClearBufferEx(SCREEN_TV, 0x00000000);
-    OSScreenClearBufferEx(SCREEN_DRC, 0x00000000);
-
-    DCFlushRange(tvBuffer, tvBufferSize);
-    DCFlushRange(drcBuffer, drcBufferSize);
-
-    OSScreenFlipBuffersEx(SCREEN_TV);
-    OSScreenFlipBuffersEx(SCREEN_DRC);
+    clearBuffers();
     va_list va;
     va_start(va, message);
     char *tmp = nullptr;
@@ -91,28 +101,9 @@ void promptError(const char *message, ...) {
     }
     if (tmp != nullptr)
         free(tmp);
-    OSScreenFlipBuffersEx(SCREEN_TV);
-    OSScreenFlipBuffersEx(SCREEN_DRC);
+    flipBuffers();
     va_end(va);
     sleep(2);
-}
-
-void flipBuffers() {
-    DCFlushRange(tvBuffer, tvBufferSize);
-    DCFlushRange(drcBuffer, drcBufferSize);
-
-    OSScreenFlipBuffersEx(SCREEN_TV);
-    OSScreenFlipBuffersEx(SCREEN_DRC);
-}
-
-void clearBuffersEx() {
-    OSScreenClearBufferEx(SCREEN_TV, 0x00000000);
-    OSScreenClearBufferEx(SCREEN_DRC, 0x00000000);
-}
-
-void clearBuffers() {
-    clearBuffersEx();
-    flipBuffers();
 }
 
 void header() {

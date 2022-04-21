@@ -54,10 +54,9 @@ int copyFile(std::string pPath, std::string oPath) {
     setvbuf(source, buffer[0], _IOFBF, IO_MAX_FILE_BUFFER);
     setvbuf(dest, buffer[1], _IOFBF, IO_MAX_FILE_BUFFER);
     int size = 0;
-    int bytesWritten = 0;
 
     while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0) {
-        bytesWritten = fwrite(buffer[2], 1, size, dest);
+         fwrite(buffer[2], 1, size, dest);
     }
     fclose(source);
     fclose(dest);
