@@ -2,7 +2,7 @@
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
-bool replace(std::string &str, const std::string &from, const std::string &to) {
+auto replace(std::string &str, const std::string &from, const std::string &to) -> bool {
     size_t start_pos = str.find(from);
     if (start_pos == std::string::npos)
         return false;
@@ -10,7 +10,7 @@ bool replace(std::string &str, const std::string &from, const std::string &to) {
     return true;
 }
 
-static std::string newlibToFSA(std::string path) {
+static auto newlibToFSA(std::string path) -> std::string {
     if (path[3] == ':') {
         switch (path[0]) {
             case 'u':
@@ -27,7 +27,7 @@ static std::string newlibToFSA(std::string path) {
     return path;
 }
 
-int copyFile(std::string pPath, std::string oPath) {
+auto copyFile(std::string pPath, std::string oPath) -> int {
     FILE *source = fopen(pPath.c_str(), "rb");
     if (source == nullptr)
         return -1;
@@ -53,6 +53,7 @@ int copyFile(std::string pPath, std::string oPath) {
 
     setvbuf(source, buffer[0], _IOFBF, IO_MAX_FILE_BUFFER);
     setvbuf(dest, buffer[1], _IOFBF, IO_MAX_FILE_BUFFER);
+
     int size = 0;
 
     while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0) {
@@ -60,15 +61,15 @@ int copyFile(std::string pPath, std::string oPath) {
     }
     fclose(source);
     fclose(dest);
-    for (int i = 0; i < 3; ++i)
-        free(buffer[i]);
+    for (auto & i : buffer)
+        free(i);
 
     IOSUHAX_FSA_ChangeMode(fsaFd, newlibToFSA(oPath).c_str(), 0x644);
 
     return 0;
 }
 
-int32_t loadFile(const char *fPath, uint8_t **buf) {
+auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
     int ret = 0;
     FILE *file = fopen(fPath, "rb");
     if (file != nullptr) {
@@ -88,9 +89,9 @@ int32_t loadFile(const char *fPath, uint8_t **buf) {
     return ret;
 }
 
-int hashFiles(std::string file1, std::string file2) {
-    uint8_t *file1Buf = new uint8_t;
-    uint8_t *file2Buf = new uint8_t;
+auto hashFiles(std::string file1, std::string file2) -> int {
+    auto *file1Buf = new uint8_t;
+    auto *file2Buf = new uint8_t;
     loadFile(file1.c_str(), &file1Buf);
     loadFile(file2.c_str(), &file2Buf);
     std::hash<uint8_t> ptr_hash;

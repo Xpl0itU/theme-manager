@@ -1,9 +1,9 @@
 #include <atomic>
 #include <cstring>
 #include <malloc.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <cstdarg>
+
+#include <cstdint>
 #include <unistd.h>
 #include <vector>
 
@@ -33,6 +33,7 @@ size_t tvBufferSize;
 size_t drcBufferSize;
 void *tvBuffer;
 void *drcBuffer;
+
 int fsaFd;
 
 std::string menuPath;
@@ -55,7 +56,7 @@ static void clearBuffers() {
     flipBuffers();
 }
 
-bool dirExists(const char *dir) {
+auto dirExists(const char *dir) -> bool {
     DIR *d = opendir(dir);
     if (d) {
         closedir(d);
@@ -82,7 +83,7 @@ std::vector<std::string> files(std::string path) {
     std::vector<std::string> files;
     DIR *dir_ = opendir(path.c_str());
     struct dirent *ent;
-    while ((ent = readdir(dir_)) != NULL) {
+    while ((ent = readdir(dir_)) != nullptr) {
         if (ent->d_type == DT_DIR) { // regular file
             files.push_back(ent->d_name);
             ++entrycount;
@@ -160,7 +161,7 @@ void check() {
     }
 }
 
-int checkEntry(std::string fPath) {
+auto checkEntry(std::string fPath) -> int {
     struct stat st;
     if (stat(fPath.c_str(), &st) == -1)
         return 0;
@@ -171,7 +172,7 @@ int checkEntry(std::string fPath) {
     return 1;
 }
 
-int mkdir_p(const char *fPath) { //Adapted from mkdir_p made by JonathonReinhart
+auto mkdir_p(const char *fPath) -> int { //Adapted from mkdir_p made by JonathonReinhart
     std::string _path;
     char *p;
     int found = 0;
@@ -198,7 +199,7 @@ int mkdir_p(const char *fPath) { //Adapted from mkdir_p made by JonathonReinhart
     return 0;
 }
 
-int checkBackup() {
+auto checkBackup() -> int {
     if ((checkEntry(themesPath + "backup/") == 2) && (checkEntry(themesPath + "backup/Men.pack") == 1) && (checkEntry(themesPath + "backup/Men2.pack") == 1))
         return 0;
     return -1;
@@ -298,7 +299,7 @@ void install() {
     }
 }
 
-int main() {
+auto main() -> int {
     WHBProcInit();
 
     OSScreenInit();
