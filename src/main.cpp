@@ -14,6 +14,7 @@
 #include <whb/sdcard.h>
 
 #include "hash.h"
+#include "iosuhax.h"
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
