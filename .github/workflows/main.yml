@@ -32,6 +32,6 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: binary
-          path: .
+          path: wiiu/apps/theme-manager
       - name: zip artifact
-        run: zip -r ${{ env.REPOSITORY_NAME }}_${{ env.DATETIME }}.zip
+        run: zip -r ${{ env.REPOSITORY_NAME }}_${{ env.DATETIME }}.zip wiiu
