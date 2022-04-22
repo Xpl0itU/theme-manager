@@ -21,8 +21,8 @@ static auto newlibToFSA(std::string path) -> std::string {
     return path;
 }
 
-auto copyFile(const std::string& pPath, const std::string& oPath) -> int {
-    FILE *source = fopen(pPath.c_str(), "rbe");
+auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
+    FILE *source = fopen(pPath.c_str(), "rb");
     if (source == nullptr)
         return -1;
 
@@ -52,9 +52,10 @@ auto copyFile(const std::string& pPath, const std::string& oPath) -> int {
 
     while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0)
         fwrite(buffer[2], 1, size, dest);
+    
     fclose(source);
     fclose(dest);
-    for (auto & i : buffer)
+    for (auto &i : buffer)
         free(i);
 
     IOSUHAX_FSA_ChangeMode(fsaFd, newlibToFSA(oPath).c_str(), 0x644);
@@ -66,7 +67,7 @@ auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
     int ret = 0;
     FILE *file = fopen(fPath, "rb");
     if (file != nullptr) {
-        struct stat st{};
+        struct stat st {};
         stat(fPath, &st);
         int size = st.st_size;
 
@@ -74,7 +75,7 @@ auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
         if (*buf != nullptr) {
             if (fread(*buf, size, 1, file) == 1)
                 ret = size;
-            else 
+            else
                 free(*buf);
         }
         fclose(file);
@@ -82,7 +83,7 @@ auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
     return ret;
 }
 
-auto hashFiles(const std::string& file1, const std::string& file2) -> int {
+auto hashFiles(const std::string &file1, const std::string &file2) -> int {
     auto *file1Buf = new uint8_t;
     auto *file2Buf = new uint8_t;
     loadFile(file1.c_str(), &file1Buf);
