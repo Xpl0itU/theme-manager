@@ -39,12 +39,12 @@ int copyFile(std::string pPath, std::string oPath) {
     }
 
     char *buffer[3];
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; ++i) {
         buffer[i] = (char *) aligned_alloc(0x40, IO_MAX_FILE_BUFFER);
         if (buffer[i] == nullptr) {
             fclose(source);
             fclose(dest);
-            for (i--; i >= 0; i--)
+            for (--i; i >= 0; --i)
                 free(buffer[i]);
 
             return -1;
@@ -60,7 +60,7 @@ int copyFile(std::string pPath, std::string oPath) {
     }
     fclose(source);
     fclose(dest);
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; ++i)
         free(buffer[i]);
 
     IOSUHAX_FSA_ChangeMode(fsaFd, newlibToFSA(oPath).c_str(), 0x644);
@@ -89,8 +89,8 @@ int32_t loadFile(const char *fPath, uint8_t **buf) {
 }
 
 int hashFiles(std::string file1, std::string file2) {
-    uint8_t *file1Buf = (uint8_t *) malloc(sizeof(uint8_t));
-    uint8_t *file2Buf = (uint8_t *) malloc(sizeof(uint8_t));
+    uint8_t *file1Buf = new uint8_t;
+    uint8_t *file2Buf = new uint8_t;
     loadFile(file1.c_str(), &file1Buf);
     loadFile(file2.c_str(), &file2Buf);
     std::hash<uint8_t> ptr_hash;
@@ -100,7 +100,7 @@ int hashFiles(std::string file1, std::string file2) {
         return 0;
     }
 
-    free(file1Buf);
-    free(file2Buf);
+    delete file1Buf;
+    delete file2Buf;
     return 1;
 }

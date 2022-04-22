@@ -22,7 +22,7 @@ int cursorPosition = 0;
 bool isInstalling = false;
 bool isBackup = false;
 
-std::string themesPath = "/vol/external01/wiiu/themes/";
+const std::string themesPath = "/vol/external01/wiiu/themes/";
 std::vector<std::string> themes;
 
 VPADStatus status;
@@ -37,7 +37,7 @@ int fsaFd;
 
 std::string menuPath;
 
-void flipBuffers() {
+static void flipBuffers() {
     DCFlushRange(tvBuffer, tvBufferSize);
     DCFlushRange(drcBuffer, drcBufferSize);
 
@@ -45,12 +45,12 @@ void flipBuffers() {
     OSScreenFlipBuffersEx(SCREEN_DRC);
 }
 
-void clearBuffersEx() {
+static void clearBuffersEx() {
     OSScreenClearBufferEx(SCREEN_TV, 0x00000000);
     OSScreenClearBufferEx(SCREEN_DRC, 0x00000000);
 }
 
-void clearBuffers() {
+static void clearBuffers() {
     clearBuffersEx();
     flipBuffers();
 }
@@ -108,7 +108,18 @@ void promptError(const char *message, ...) {
     sleep(2);
 }
 
-void header() {
+static void warning() {
+    clearBuffersEx();
+    console_print_pos(0, 0, "WARNING");
+    console_print_pos(0, 1, "----------------------------------------------------------------------");
+    console_print_pos(0, 2, "INSTALLING THEMES IS DANGEROUS, CONTINUE AT YOUR OWN RISK");
+    console_print_pos(0, 3, "A BAD THEME MAY LEAD TO A (RECOVERABLE) BRICK");
+    console_print_pos(0, 4, "----------------------------------------------------------------------");
+    flipBuffers();
+    sleep(5);
+}
+
+static void header() {
     if (isBackup) {
         console_print_pos(0, 0, "Backup current theme...");
         console_print_pos(0, 1, "----------------------------------------------------------------------");
@@ -167,9 +178,9 @@ int mkdir_p(const char *fPath) { //Adapted from mkdir_p made by JonathonReinhart
 
     _path.assign(fPath);
 
-    for (p = (char *) _path.c_str() + 1; *p != 0; p++) {
+    for (p = (char *) _path.c_str() + 1; *p != 0; ++p) {
         if (*p == '/') {
-            found++;
+            ++found;
             if (found > 2) {
                 *p = '\0';
                 if (checkEntry(_path) == 0)
@@ -287,17 +298,6 @@ void install() {
     }
 }
 
-void warning() {
-    clearBuffersEx();
-    console_print_pos(0, 0, "WARNING");
-    console_print_pos(0, 1, "----------------------------------------------------------------------");
-    console_print_pos(0, 2, "INSTALLING THEMES IS DANGEROUS, CONTINUE AT YOUR OWN RISK");
-    console_print_pos(0, 3, "A BAD THEME MAY LEAD TO A (RECOVERABLE) BRICK");
-    console_print_pos(0, 4, "----------------------------------------------------------------------");
-    flipBuffers();
-    sleep(5);
-}
-
 int main() {
     WHBProcInit();
 
@@ -373,9 +373,8 @@ int main() {
         if (status.trigger & VPAD_BUTTON_R)
             isBackup = true;
 
-        if (isBackup)
-            if (!isInstalling)
-                backup();
+        if (isBackup && !isInstalling)
+            backup();
 
         if (isInstalling) {
             install();
