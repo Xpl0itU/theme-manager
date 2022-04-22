@@ -1,3 +1,6 @@
+#ifndef _HASH_H
+#define _HASH_H
+
 #include <dirent.h>
 #include <functional>
 #include <iostream>
@@ -9,5 +12,6 @@
 
 extern int fsaFd;
 
-int copyFile(std::string pPath, std::string oPath);
-int32_t hashFiles(std::string file1, std::string file2);
+int copyFile(const std::string &pPath, const std::string &oPath);
+int32_t hashFiles(const std::string &file1, const std::string &file2);
+#endif

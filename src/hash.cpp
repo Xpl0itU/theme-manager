@@ -13,22 +13,16 @@ auto replace(std::string &str, const std::string &from, const std::string &to) -
 static auto newlibToFSA(std::string path) -> std::string {
     if (path[3] == ':') {
         switch (path[0]) {
-            case 'u':
-                replace(path, "usb:", "/vol/storage_usb01");
-                break;
             case 'm':
                 replace(path, "mlc:", "/vol/storage_mlc01");
-                break;
-            case 's':
-                replace(path, "slc:", "/vol/storage_slccmpt01");
                 break;
         }
     }
     return path;
 }
 
-auto copyFile(std::string pPath, std::string oPath) -> int {
-    FILE *source = fopen(pPath.c_str(), "rb");
+auto copyFile(const std::string& pPath, const std::string& oPath) -> int {
+    FILE *source = fopen(pPath.c_str(), "rbe");
     if (source == nullptr)
         return -1;
 
@@ -40,7 +34,7 @@ auto copyFile(std::string pPath, std::string oPath) -> int {
 
     char *buffer[3];
     for (int i = 0; i < 3; ++i) {
-        buffer[i] = (char *) aligned_alloc(0x40, IO_MAX_FILE_BUFFER);
+        buffer[i] = static_cast<char *>(aligned_alloc(0x40, IO_MAX_FILE_BUFFER));
         if (buffer[i] == nullptr) {
             fclose(source);
             fclose(dest);
@@ -56,9 +50,8 @@ auto copyFile(std::string pPath, std::string oPath) -> int {
 
     int size = 0;
 
-    while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0) {
+    while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0)
         fwrite(buffer[2], 1, size, dest);
-    }
     fclose(source);
     fclose(dest);
     for (auto & i : buffer)
@@ -73,15 +66,15 @@ auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
     int ret = 0;
     FILE *file = fopen(fPath, "rb");
     if (file != nullptr) {
-        struct stat st;
+        struct stat st{};
         stat(fPath, &st);
         int size = st.st_size;
 
-        *buf = (uint8_t *) malloc(size);
+        *buf = static_cast<uint8_t *>(malloc(size));
         if (*buf != nullptr) {
             if (fread(*buf, size, 1, file) == 1)
                 ret = size;
-            else
+            else 
                 free(*buf);
         }
         fclose(file);
@@ -89,7 +82,7 @@ auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
     return ret;
 }
 
-auto hashFiles(std::string file1, std::string file2) -> int {
+auto hashFiles(const std::string& file1, const std::string& file2) -> int {
     auto *file1Buf = new uint8_t;
     auto *file2Buf = new uint8_t;
     loadFile(file1.c_str(), &file1Buf);

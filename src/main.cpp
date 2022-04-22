@@ -1,7 +1,7 @@
 #include <atomic>
+#include <cstdarg>
 #include <cstring>
 #include <malloc.h>
-#include <cstdarg>
 
 #include <cstdint>
 #include <unistd.h>
@@ -58,7 +58,7 @@ static void clearBuffers() {
 
 auto dirExists(const char *dir) -> bool {
     DIR *d = opendir(dir);
-    if (d) {
+    if (d != nullptr) {
         closedir(d);
         return true;
     }
@@ -82,7 +82,7 @@ void console_print_pos(int x, int y, const char *format, ...) { // Source: ftpii
 std::vector<std::string> files(std::string path) {
     std::vector<std::string> files;
     DIR *dir_ = opendir(path.c_str());
-    struct dirent *ent;
+    struct dirent *ent = nullptr;
     while ((ent = readdir(dir_)) != nullptr) {
         if (ent->d_type == DT_DIR) { // regular file
             files.push_back(ent->d_name);
@@ -162,7 +162,7 @@ void check() {
 }
 
 auto checkEntry(std::string fPath) -> int {
-    struct stat st;
+    struct stat st {};
     if (stat(fPath.c_str(), &st) == -1)
         return 0;
 
@@ -173,8 +173,8 @@ auto checkEntry(std::string fPath) -> int {
 }
 
 auto mkdir_p(const char *fPath) -> int { //Adapted from mkdir_p made by JonathonReinhart
-    std::string _path;
-    char *p;
+    std::string _path = 0;
+    char *p = nullptr;
     int found = 0;
 
     _path.assign(fPath);
@@ -310,9 +310,11 @@ auto main() -> int {
     tvBuffer = memalign(0x100, tvBufferSize);
     drcBuffer = memalign(0x100, drcBufferSize);
 
-    if (!tvBuffer || !drcBuffer) {
-        if (tvBuffer) free(tvBuffer);
-        if (drcBuffer) free(drcBuffer);
+    if ((tvBuffer == nullptr) || (drcBuffer == nullptr)) {
+        if (tvBuffer != nullptr)
+            free(tvBuffer);
+        if (drcBuffer != nullptr)
+            free(drcBuffer);
 
         OSScreenShutdown();
         WHBProcShutdown();
@@ -392,8 +394,10 @@ auto main() -> int {
         flipBuffers();
     }
 
-    if (tvBuffer) free(tvBuffer);
-    if (drcBuffer) free(drcBuffer);
+    if (tvBuffer != nullptr)
+        free(tvBuffer);
+    if (drcBuffer != nullptr)
+        free(drcBuffer);
 
     OSScreenShutdown();
     WHBProcShutdown();
