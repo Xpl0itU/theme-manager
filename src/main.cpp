@@ -115,7 +115,8 @@ static void warning() {
     console_print_pos(0, 1, "----------------------------------------------------------------------");
     console_print_pos(0, 2, "INSTALLING THEMES IS DANGEROUS, CONTINUE AT YOUR OWN RISK");
     console_print_pos(0, 3, "A BAD THEME MAY LEAD TO A (RECOVERABLE) BRICK");
-    console_print_pos(0, 4, "----------------------------------------------------------------------");
+    console_print_pos(0, 4, "PLEASE ENSURE THAT YOU HAVE A COLDBOOT SOLUTION INSTALLED");
+    console_print_pos(0, 5, "----------------------------------------------------------------------");
     flipBuffers();
     sleep(5);
 }
@@ -351,6 +352,11 @@ auto main() -> int {
     else if (dirExists("mlc:/sys/title/00050010/10040000"))
         menuPath = "mlc:/sys/title/00050010/10040000";
 
+    testIosuhax();
+    if(getCFWVersion() != CFWVersion::TIRAMISU_RPX) {
+        promptError("This CFW version is not supported, please use Tiramisu.");
+        return 0;
+    }
     warning();
 
     while (WHBProcIsRunning()) {

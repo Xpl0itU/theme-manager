@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+    <name>ThemeMii</name>
+    <coder>DaThinkingChair</coder>
+    <version>1.2</version>
+    <release_date>20220306000000</release_date>
+    <short_description>Wii U theme manager</short_description>
+    <long_description>Wii U theme manager
+
+        The best theme installer and manager for the Wii U yet
+
+	How to install themes:
+
+	1. Put the Men.pack and Men2.pack files of the theme in sd:/wiiu/themes/[theme name]
+	2. Run the homebrew
+	3. Select the theme
+	4. Profit!
+
+    </long_description>
+    <category>tool</category>
+    <url>https://github.com/Xpl0itU/theme-manager/releases</url>
+</app>
