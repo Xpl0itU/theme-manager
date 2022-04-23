@@ -8,13 +8,13 @@
 #include <vector>
 
 #include <coreinit/cache.h>
+#include <coreinit/ios.h>
 #include <coreinit/screen.h>
 #include <vpad/input.h>
 #include <whb/proc.h>
 #include <whb/sdcard.h>
 
 #include "hash.h"
-#include "iosuhax.h"
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
@@ -35,6 +35,7 @@ size_t drcBufferSize;
 void *tvBuffer;
 void *drcBuffer;
 
+int res;
 int fsaFd;
 
 std::string menuPath;
@@ -80,18 +81,18 @@ void console_print_pos(int x, int y, const char *format, ...) { // Source: ftpii
         free(tmp);
 }
 
-std::vector<std::string> files(std::string path) {
-    std::vector<std::string> files;
+std::vector<std::string> listFolders(std::string path) {
+    std::vector<std::string> folders;
     DIR *dir_ = opendir(path.c_str());
     struct dirent *ent = nullptr;
     while ((ent = readdir(dir_)) != nullptr) {
-        if (ent->d_type == DT_DIR) { // regular file
-            files.push_back(ent->d_name);
+        if (ent->d_type == DT_DIR) { // folder
+            folders.push_back(ent->d_name);
             ++entrycount;
         }
     }
 
-    return files;
+    return folders;
 }
 
 void promptError(const char *message, ...) {
@@ -301,6 +302,32 @@ void install() {
     }
 }
 
+static bool cfwValid()
+{
+	int handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
+	bool ret = handle >= 0;
+	if(ret)
+	{
+		char dummy[0x100];
+		int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
+		ret = IOS_Ioctl(handle, 100, &in, sizeof(in), dummy, sizeof(dummy)) == IOS_ERROR_OK;
+		if(ret)
+		{
+			res = IOSUHAX_Open(NULL);
+            if (res < 0) {
+                promptError("IOSUHAX_Open failed. Please use Tiramisu");
+                return 0;
+            }
+			if(ret)
+				ret = IOSUHAX_read_otp((uint8_t *)dummy, 1) >= 0;
+		}
+
+		IOS_Close(handle);
+	}
+
+	return ret;
+}
+
 auto main() -> int {
     WHBProcInit();
 
@@ -330,9 +357,8 @@ auto main() -> int {
     OSScreenEnableEx(SCREEN_TV, true);
     OSScreenEnableEx(SCREEN_DRC, true);
 
-    int res = IOSUHAX_Open(NULL);
-    if (res < 0) {
-        promptError("IOSUHAX_Open failed.");
+    if(!cfwValid()) {
+        promptError("This CFW version is not supported, please use Tiramisu.");
         return 0;
     }
 
@@ -344,7 +370,7 @@ auto main() -> int {
 
     WHBMountSdCard();
     mount_fs("mlc", fsaFd, NULL, "/vol/storage_mlc01");
-    themes = files(themesPath);
+    themes = listFolders(themesPath);
 
     if (dirExists("mlc:/sys/title/00050010/10040200"))
         menuPath = "mlc:/sys/title/00050010/10040200";
@@ -353,11 +379,6 @@ auto main() -> int {
     else if (dirExists("mlc:/sys/title/00050010/10040000"))
         menuPath = "mlc:/sys/title/00050010/10040000";
 
-    testIosuhax();
-    if(getCFWVersion() != CFWVersion::TIRAMISU_RPX) {
-        promptError("This CFW version is not supported, please use Tiramisu.");
-        return 0;
-    }
     warning();
 
     while (WHBProcIsRunning()) {
@@ -411,7 +432,6 @@ auto main() -> int {
 
     unmount_fs("mlc");
     IOSUHAX_FSA_Close(fsaFd);
-    IOSUHAX_Close();
 
     return 1;
 }
