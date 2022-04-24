@@ -41,7 +41,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
 
             return -1;
         }
-    }
+    
 
  
     int size = 0;
