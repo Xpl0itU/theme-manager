@@ -45,7 +45,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
  
     int size = 0;
 
-    while ((size = IOSUHAX_FSA_ReadFile(fsaFd, buffer, 0x01, IO_MAX_FILE_BUFFER, source, 0)) > 0)
+    while ((size = IOSUHAX_FSA_ReadFile(fsaFd, buffer, 0x01, sizeof(buffer), source, 0)) > 0)
         IOSUHAX_FSA_WriteFile(fsaFd, buffer, 0x01, size, dest, 0);
     
     IOSUHAX_FSA_CloseFile(fsaFd, destFd);
