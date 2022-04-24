@@ -23,7 +23,7 @@ static auto newlibToFSA(std::string path) -> std::string {
 
 auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     int srcFd = -1, destFd = -1;
-    int buffer_size = IO_MAX_FILE_BUFFER;
+    int buf_size = IO_MAX_FILE_BUFFER;
     
     int source = IOSUHAX_FSA_OpenFile(fsaFd, pPath.c_str(), "rb", &srcFd);
    
