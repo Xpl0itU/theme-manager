@@ -22,36 +22,41 @@ static auto newlibToFSA(std::string path) -> std::string {
 }
 
 auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
-    int srcFd = -1, destFd = -1;
-    int buf_size = IO_MAX_FILE_BUFFER;
-    
-    int source = IOSUHAX_FSA_OpenFile(fsaFd, pPath.c_str(), "rb", &srcFd);
-   
+    FILE *source = fopen(pPath.c_str(), "rb");
+    if (source == nullptr)
+        return -1;
 
-    int dest = IOSUHAX_FSA_OpenFile(fsaFd, oPath.c_str(), "wb", &destFd);
-   
+    FILE *dest = fopen(oPath.c_str(), "wb");
+    if (dest == nullptr) {
+        fclose(source);
+        return -1;
+    }
 
-    char *buffer;
- 
-        buffer = static_cast<char *>(aligned_alloc(0x40, IO_MAX_FILE_BUFFER));
-        if (buffer == nullptr) {
-            IOSUHAX_FSA_CloseFile(fsaFd, destFd);
-	    IOSUHAX_FSA_CloseFile(fsaFd, srcFd);
-            free(buffer);
+    char *buffer[3];
+    for (int i = 0; i < 3; ++i) {
+        buffer[i] = static_cast<char *>(aligned_alloc(0x40, IO_MAX_FILE_BUFFER));
+        if (buffer[i] == nullptr) {
+            fclose(source);
+            fclose(dest);
+            for (--i; i >= 0; --i)
+                free(buffer[i]);
 
             return -1;
         }
-    
+    }
 
- 
+    setvbuf(source, buffer[0], _IOFBF, IO_MAX_FILE_BUFFER);
+    setvbuf(dest, buffer[1], _IOFBF, IO_MAX_FILE_BUFFER);
+
     int size = 0;
 
-    while ((size = IOSUHAX_FSA_ReadFile(fsaFd, buffer, 0x01, buf_size, srcFd, 0)) > 0)
-        IOSUHAX_FSA_WriteFile(fsaFd, buffer, 0x01, size, destFd, 0);
+    while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0)
+        fwrite(buffer[2], 1, size, dest);
     
-    IOSUHAX_FSA_CloseFile(fsaFd, destFd);
-    IOSUHAX_FSA_CloseFile(fsaFd, srcFd);
-    free(buffer);
+    fclose(source);
+    fclose(dest);
+    for (auto &i : buffer)
+        free(i);
 
     IOSUHAX_FSA_ChangeMode(fsaFd, newlibToFSA(oPath).c_str(), 0x644);
 
