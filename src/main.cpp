@@ -176,8 +176,8 @@ auto checkEntry(std::string fPath) -> int {
 }
 
 auto mkdir_p(const char *fPath) -> int { //Adapted from mkdir_p made by JonathonReinhart
-    std::string _path = 0;
-    char *p = nullptr;
+    std::string _path;
+    char *p;
     int found = 0;
 
     _path.assign(fPath);
