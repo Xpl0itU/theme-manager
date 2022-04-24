@@ -25,14 +25,10 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     int srcFd = -1, destFd = -1;
     int ret = 0;
     int source = IOSUHAX_FSA_OpenFile(fsaFd, pPath.c_str(), "rb", &srcFd);
-    if (source == nullptr)
-        return -1;
+   
 
     int dest = IOSUHAX_FSA_OpenFile(fsaFd, oPath.c_str(), "wb", &destFd);
-    if (dest == nullptr) {
-        IOSUHAX_FSA_CloseFile(fsaFd, srcFd);
-        return -1;
-    }
+   
 
     char *buffer;
  
