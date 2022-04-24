@@ -23,7 +23,8 @@ static auto newlibToFSA(std::string path) -> std::string {
 
 auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     int srcFd = -1, destFd = -1;
-    int ret = 0;
+    int buffer_size = IO_MAX_FILE_BUFFER;
+    
     int source = IOSUHAX_FSA_OpenFile(fsaFd, pPath.c_str(), "rb", &srcFd);
    
 
@@ -45,7 +46,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
  
     int size = 0;
 
-    while ((size = IOSUHAX_FSA_ReadFile(fsaFd, buffer, 0x01, sizeof(buffer), srcFd, 0)) > 0)
+    while ((size = IOSUHAX_FSA_ReadFile(fsaFd, buffer, 0x01, buf_size, srcFd, 0)) > 0)
         IOSUHAX_FSA_WriteFile(fsaFd, buffer, 0x01, size, destFd, 0);
     
     IOSUHAX_FSA_CloseFile(fsaFd, destFd);
