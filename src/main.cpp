@@ -58,8 +58,8 @@ static void clearBuffers() {
     flipBuffers();
 }
 
-auto dirExists(const char *dir) -> bool {
-    DIR *d = opendir(dir);
+auto dirExists(const std::string &dir) -> bool {
+    DIR *d = opendir(dir.c_str());
     if (d != nullptr) {
         closedir(d);
         return true;
@@ -81,7 +81,7 @@ void console_print_pos(int x, int y, const char *format, ...) { // Source: ftpii
         free(tmp);
 }
 
-std::vector<std::string> listFolders(std::string path) {
+std::vector<std::string> listFolders(const std::string &path) {
     std::vector<std::string> folders;
     DIR *dir_ = opendir(path.c_str());
     struct dirent *ent = nullptr;
@@ -125,7 +125,7 @@ static void warning() {
 
 static void header() {
     if (isBackup) {
-        console_print_pos(0, 0, "Backup current theme...");
+        console_print_pos(0, 0, "Backing up current theme...");
         console_print_pos(0, 1, "----------------------------------------------------------------------");
         console_print_pos(0, 2, "Please wait...");
         console_print_pos(0, 3, "----------------------------------------------------------------------");
@@ -175,12 +175,12 @@ auto checkEntry(std::string fPath) -> int {
     return 1;
 }
 
-auto mkdir_p(const char *fPath) -> int { //Adapted from mkdir_p made by JonathonReinhart
+auto mkdir_p(const std::string &fPath) -> int { // Adapted from mkdir_p made by JonathonReinhart
     std::string _path;
     char *p;
     int found = 0;
 
-    _path.assign(fPath);
+    _path = fPath;
 
     for (p = (char *) _path.c_str() + 1; *p != 0; ++p) {
         if (*p == '/') {
@@ -213,7 +213,7 @@ void backup() {
     header();
     console_print_pos(0, 5, "Backing up Men.pack");
     flipBuffers();
-    mkdir_p((themesPath + "backup").c_str());
+    mkdir_p(themesPath + "backup");
     if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") == 0) {
         clearBuffersEx();
         header();

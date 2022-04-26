@@ -63,7 +63,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     return 0;
 }
 
-auto loadFile(std::string fPath, uint8_t **buf) -> int32_t {
+auto loadFile(const std::string fPath, uint8_t **buf) -> int32_t {
     int ret = 0;
     FILE *file = fopen(fPath.c_str(), "rb");
     if (file != nullptr) {
