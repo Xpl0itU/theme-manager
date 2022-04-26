@@ -302,30 +302,27 @@ void install() {
     }
 }
 
-static bool cfwValid()
-{
-	int handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
-	bool ret = handle >= 0;
-	if(ret)
-	{
-		char dummy[0x100];
-		int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
-		ret = IOS_Ioctl(handle, 100, &in, sizeof(in), dummy, sizeof(dummy)) == IOS_ERROR_OK;
-		if(ret)
-		{
-			res = IOSUHAX_Open(NULL);
+static bool cfwValid() {
+    int handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
+    bool ret = handle >= 0;
+    if (ret) {
+        char dummy[0x100];
+        int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
+        ret = IOS_Ioctl(handle, 100, &in, sizeof(in), dummy, sizeof(dummy)) == IOS_ERROR_OK;
+        if (ret) {
+            res = IOSUHAX_Open(NULL);
             if (res < 0) {
                 promptError("IOSUHAX_Open failed. Please use Tiramisu");
                 return 0;
             }
-			if(ret)
-				ret = IOSUHAX_read_otp((uint8_t *)dummy, 1) >= 0;
-		}
+            if (ret)
+                ret = IOSUHAX_read_otp((uint8_t *) dummy, 1) >= 0;
+        }
 
-		IOS_Close(handle);
-	}
+        IOS_Close(handle);
+    }
 
-	return ret;
+    return ret;
 }
 
 auto main() -> int {
@@ -357,7 +354,7 @@ auto main() -> int {
     OSScreenEnableEx(SCREEN_TV, true);
     OSScreenEnableEx(SCREEN_DRC, true);
 
-    if(!cfwValid()) {
+    if (!cfwValid()) {
         promptError("This CFW version is not supported, please use Tiramisu.");
         return 0;
     }

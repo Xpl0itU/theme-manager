@@ -52,7 +52,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
 
     while ((size = fread(buffer[2], 1, IO_MAX_FILE_BUFFER, source)) > 0)
         fwrite(buffer[2], 1, size, dest);
-    
+
     fclose(source);
     fclose(dest);
     for (auto &i : buffer)
