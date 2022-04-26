@@ -63,12 +63,12 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     return 0;
 }
 
-auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
+auto loadFile(std::string fPath, uint8_t **buf) -> int32_t {
     int ret = 0;
-    FILE *file = fopen(fPath, "rb");
+    FILE *file = fopen(fPath.c_str(), "rb");
     if (file != nullptr) {
         struct stat st {};
-        stat(fPath, &st);
+        stat(fPath.c_str(), &st);
         int size = st.st_size;
 
         *buf = static_cast<uint8_t *>(malloc(size));
@@ -86,12 +86,12 @@ auto loadFile(const char *fPath, uint8_t **buf) -> int32_t {
 auto hashFiles(const std::string &file1, const std::string &file2) -> int {
     auto *file1Buf = new uint8_t;
     auto *file2Buf = new uint8_t;
-    loadFile(file1.c_str(), &file1Buf);
-    loadFile(file2.c_str(), &file2Buf);
+    loadFile(file1, &file1Buf);
+    loadFile(file2, &file2Buf);
     std::hash<uint8_t> ptr_hash;
     if (ptr_hash(*file1Buf) == ptr_hash(*file2Buf)) {
-        free(file1Buf);
-        free(file2Buf);
+        delete file1Buf;
+        delete file2Buf;
         return 0;
     }
 
