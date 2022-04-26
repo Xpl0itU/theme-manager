@@ -16,8 +16,6 @@
 
 #include "hash.h"
 
-#define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
-
 int entrycount = 0;
 int cursorPosition = 0;
 bool isInstalling = false;
