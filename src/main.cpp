@@ -140,8 +140,10 @@ static void header() {
 }
 
 void check() {
+    clearBuffersEx();
     header();
     console_print_pos(0, 5, "Checking Men.pack");
+    flipBuffers();
     if (hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
         clearBuffersEx();
         header();
@@ -153,6 +155,7 @@ void check() {
     clearBuffersEx();
     header();
     console_print_pos(0, 5, "Checking Men2.pack");
+    flipBuffers();
     if (hashFiles(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") != 0) {
         clearBuffersEx();
         header();
