@@ -43,7 +43,7 @@ DRC_SPLASH	:=
 #-------------------------------------------------------------------------------
 # options for code generation
 #-------------------------------------------------------------------------------
-CFLAGS	:=	-g -std=c++20 -Wall -Ofast -ffunction-sections -fpermissive \
+CFLAGS	:=	-g -std=c++20 -Wall -Ofast -ffunction-sections -fpermissive -pipe \
 			$(MACHDEP)
 
 CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__

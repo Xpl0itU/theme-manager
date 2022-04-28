@@ -2,7 +2,7 @@
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
-auto replace(std::string &str, const std::string &from, const std::string &to) -> bool {
+static auto replace(std::string &str, const std::string &from, const std::string &to) -> bool {
     size_t start_pos = str.find(from);
     if (start_pos == std::string::npos)
         return false;
@@ -63,7 +63,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     return 0;
 }
 
-auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
+static auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
     int ret = 0;
     FILE *file = fopen(fPath.c_str(), "rb");
     if (file != nullptr) {
