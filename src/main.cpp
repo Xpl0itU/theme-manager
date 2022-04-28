@@ -215,10 +215,7 @@ void backup() {
     console_print_pos(0, 5, "Backing up Men.pack");
     flipBuffers();
     mkdir_p(themesPath + "backup");
-    if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") == 0) {
-        clearBuffersEx();
-        header();
-    } else {
+    if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
         clearBuffersEx();
         header();
         console_print_pos(0, 5, "Men.pack error");
@@ -229,17 +226,13 @@ void backup() {
     header();
     console_print_pos(0, 5, "Backing up Men2.pack");
     flipBuffers();
-    if (copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") == 0) {
-        clearBuffersEx();
-        header();
-    } else {
+    if (copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
         clearBuffersEx();
         header();
         console_print_pos(0, 5, "Men2.pack error");
         flipBuffers();
         sleep(2);
     }
-
     clearBuffersEx();
     header();
     console_print_pos(0, 5, "Checking Men.pack");
@@ -250,7 +243,6 @@ void backup() {
         flipBuffers();
         sleep(2);
     }
-
     clearBuffersEx();
     header();
     console_print_pos(0, 5, "Checking Men2.pack");
@@ -272,11 +264,7 @@ void install() {
     header();
     console_print_pos(0, 5, "Copying Men.pack");
     flipBuffers();
-    if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") == 0) {
-        clearBuffersEx();
-        header();
-        flipBuffers();
-    } else {
+    if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
         clearBuffersEx();
         header();
         console_print_pos(0, 5, "Men.pack error");
