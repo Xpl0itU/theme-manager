@@ -287,7 +287,6 @@ void install() {
         console_print_pos(0, 5, "Men2.pack error");
         flipBuffers();
         sleep(2);
-        isInstalling = false;
     }
 }
 

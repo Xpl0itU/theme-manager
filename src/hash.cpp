@@ -2,6 +2,24 @@
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
+static uint16_t getCRC(uint8_t* bytes, int length) 
+{
+    uint16_t crc = 0x0000;
+    for (int byteIndex = 0; byteIndex < length; byteIndex++) 
+    {
+        for (int bitIndex = 7; bitIndex >= 0; bitIndex--) 
+        {
+            crc = (((crc << 1) | ((bytes[byteIndex] >> bitIndex) & 0x1)) ^ (((crc & 0x8000) != 0) ? 0x1021 : 0)); 
+        }
+    }
+    for (int counter = 16; counter > 0; counter--) 
+    {
+        crc = ((crc << 1) ^ (((crc & 0x8000) != 0) ? 0x1021 : 0));
+    }
+
+    return (crc & 0xFFFF);
+}
+
 static auto replace(std::string &str, const std::string &from, const std::string &to) -> bool {
     size_t start_pos = str.find(from);
     if (start_pos == std::string::npos)
@@ -88,8 +106,7 @@ auto hashFiles(const std::string &file1, const std::string &file2) -> int {
     auto *file2Buf = new uint8_t;
     loadFile(file1, &file1Buf);
     loadFile(file2, &file2Buf);
-    std::hash<uint8_t> ptr_hash;
-    if (ptr_hash(*file1Buf) == ptr_hash(*file2Buf)) {
+    if (getCRC(file1Buf, sizeof(file1Buf)) == getCRC(file2Buf, sizeof(file2Buf))) {
         delete file1Buf;
         delete file2Buf;
         return 0;
