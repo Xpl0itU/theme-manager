@@ -7,6 +7,9 @@
 #include <string>
 #include <sys/stat.h>
 
+#include <iosuhax.h>
+#include <iosuhax_devoptab.h>
+
 extern int fsaFd;
 
 auto copyFile(const std::string &pPath, const std::string &oPath) -> int;

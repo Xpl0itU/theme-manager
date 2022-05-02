@@ -14,9 +14,6 @@
 #include <whb/proc.h>
 #include <whb/sdcard.h>
 
-#include <iosuhax.h>
-#include <iosuhax_devoptab.h>
-
 #include "hash.h"
 
 int entrycount = 0;

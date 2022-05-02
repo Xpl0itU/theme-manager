@@ -3,6 +3,31 @@
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
+bool replace(std::string &str, const std::string &from, const std::string &to) {
+    size_t start_pos = str.find(from);
+    if (start_pos == std::string::npos)
+        return false;
+    str.replace(start_pos, from.length(), to);
+    return true;
+}
+
+static std::string newlibToFSA(std::string path) {
+    if (path[3] == ':') {
+        switch (path[0]) {
+            case 'u':
+                replace(path, "usb:", "/vol/storage_usb01");
+                break;
+            case 'm':
+                replace(path, "mlc:", "/vol/storage_mlc01");
+                break;
+            case 's':
+                replace(path, "slc:", "/vol/storage_slccmpt01");
+                break;
+        }
+    }
+    return path;
+}
+
 static uint16_t getCRC(uint8_t* bytes, int length) 
 {
     uint16_t crc = 0x0000;
@@ -58,7 +83,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     for (auto &i : buffer)
         free(i);
 
-    chmod(oPath.c_str(), 0644);
+    IOSUHAX_FSA_ChangeMode(fsaFd, newlibToFSA(oPath).c_str(), 0x644);
 
     return 0;
 }
