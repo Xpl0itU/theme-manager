@@ -109,17 +109,17 @@ static auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
 }
 
 auto hashFiles(const std::string &file1, const std::string &file2) -> int {
-    auto *file1Buf = new uint8_t;
-    auto *file2Buf = new uint8_t;
-    loadFile(file1, &file1Buf);
-    loadFile(file2, &file2Buf);
-    if (getCRC(file1Buf, sizeof(file1Buf)) == getCRC(file2Buf, sizeof(file2Buf))) {
-        delete file1Buf;
-        delete file2Buf;
+    uint8_t *file1Buf = nullptr;
+    uint8_t *file2Buf = nullptr;
+    int32_t file1Size = loadFile(file1, &file1Buf);
+    int32_t file2Size = loadFile(file2, &file2Buf);
+    if (getCRC(file1Buf, file1Size) == getCRC(file2Buf, file2Size)) {
+        free(file1Buf);
+        free(file2Buf);
         return 0;
     }
 
-    delete file1Buf;
-    delete file2Buf;
+    free(file1Buf);
+    free(file2Buf);
     return 1;
 }
