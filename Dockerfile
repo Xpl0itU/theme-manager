@@ -1,5 +1,10 @@
-FROM wiiuenv/devkitppc:latest
+FROM devkitpro/devkitppc:latest
 
-COPY --from=wiiuenv/libiosuhax:latest /artifacts $DEVKITPRO
+RUN git clone --recursive https://github.com/Crementif/libiosuhax && \
+ cd libiosuhax && \
+ make -j$(nproc) && \
+ make install && \
+ cd .. && \
+ rm -rf libiosuhax
 
 WORKDIR project

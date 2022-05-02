@@ -1,4 +1,5 @@
 #include "hash.h"
+#include <sys/stat.h>
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
@@ -18,25 +19,6 @@ static uint16_t getCRC(uint8_t* bytes, int length)
     }
 
     return (crc & 0xFFFF);
-}
-
-static auto replace(std::string &str, const std::string &from, const std::string &to) -> bool {
-    size_t start_pos = str.find(from);
-    if (start_pos == std::string::npos)
-        return false;
-    str.replace(start_pos, from.length(), to);
-    return true;
-}
-
-static auto newlibToFSA(std::string path) -> std::string {
-    if (path[3] == ':') {
-        switch (path[0]) {
-            case 'm':
-                replace(path, "mlc:", "/vol/storage_mlc01");
-                break;
-        }
-    }
-    return path;
 }
 
 auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
@@ -76,7 +58,7 @@ auto copyFile(const std::string &pPath, const std::string &oPath) -> int {
     for (auto &i : buffer)
         free(i);
 
-    IOSUHAX_FSA_ChangeMode(fsaFd, newlibToFSA(oPath).c_str(), 0x644);
+    chmod(oPath.c_str(), 0644);
 
     return 0;
 }
