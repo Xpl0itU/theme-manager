@@ -139,28 +139,23 @@ static void header() {
     }
 }
 
-void check() {
+void displayMessage(std::string message) {
     clearBuffersEx();
     header();
-    console_print_pos(0, 5, "Checking Men.pack");
+    console_print_pos(0, 5, message.c_str());
     flipBuffers();
+}
+
+void check() {
+    displayMessage("Checking Men.pack");
     if (hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men.pack hash error");
-        flipBuffers();
+        displayMessage("Men.pack hash error");
         sleep(2);
     }
 
-    clearBuffersEx();
-    header();
-    console_print_pos(0, 5, "Checking Men2.pack");
-    flipBuffers();
+    displayMessage("Checking Men2.pack");
     if (hashFiles(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") != 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men2.pack hash error");
-        flipBuffers();
+        displayMessage("Men2.pack hash error");
         sleep(2);
     }
 }
@@ -210,47 +205,25 @@ auto checkBackup() -> int {
 }
 
 void backup() {
-    clearBuffersEx();
-    header();
-    console_print_pos(0, 5, "Backing up Men.pack");
-    flipBuffers();
+    displayMessage("Backing up Men.pack");
     mkdir_p(themesPath + "backup");
     if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men.pack error");
-        flipBuffers();
+        displayMessage("Men.pack error");
         sleep(2);
     }
-    clearBuffersEx();
-    header();
-    console_print_pos(0, 5, "Backing up Men2.pack");
-    flipBuffers();
+    displayMessage("Backing up Men2.pack");
     if (copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men2.pack error");
-        flipBuffers();
+        displayMessage("Men2.pack error");
         sleep(2);
     }
-    clearBuffersEx();
-    header();
-    console_print_pos(0, 5, "Checking Men.pack");
+    displayMessage("Checking Men.pack");
     if (hashFiles(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men.pack hash error");
-        flipBuffers();
+        displayMessage("Men.pack hash error");
         sleep(2);
     }
-    clearBuffersEx();
-    header();
-    console_print_pos(0, 5, "Checking Men2.pack");
+    displayMessage("Checking Men2.pack");
     if (hashFiles(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men2.pack hash error");
-        flipBuffers();
+        displayMessage("Men2.pack hash error");
         sleep(2);
     }
     isBackup = false;
@@ -260,32 +233,17 @@ void install() {
     clearBuffersEx();
     if (checkBackup() != 0)
         backup();
-    clearBuffersEx();
-    header();
-    console_print_pos(0, 5, "Copying Men.pack");
-    flipBuffers();
+    displayMessage("Copying Men.pack");
     if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men.pack error");
-        flipBuffers();
+        displayMessage("Men.pack error");
         sleep(2);
     }
-    clearBuffersEx();
-    header();
-    console_print_pos(0, 5, "Copying Men2.pack");
-    flipBuffers();
+    displayMessage("Copying Men2.pack");
     if (copyFile(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") == 0) {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Theme installed.");
-        flipBuffers();
+        displayMessage("Theme installed.");
         sleep(2);
     } else {
-        clearBuffersEx();
-        header();
-        console_print_pos(0, 5, "Men2.pack error");
-        flipBuffers();
+        displayMessage("Men2.pack error");
         sleep(2);
     }
 }
