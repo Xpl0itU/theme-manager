@@ -1,5 +1,4 @@
-#ifndef _HASH_H
-#define _HASH_H
+#pragma once
 
 #include <dirent.h>
 #include <functional>
@@ -14,4 +13,3 @@ extern int fsaFd;
 
 auto copyFile(const std::string &pPath, const std::string &oPath) -> int;
 auto hashFiles(const std::string &file1, const std::string &file2) -> int;
-#endif
