@@ -1,9 +1,9 @@
 #include "screen.h"
 
-size_t tvBufferSize;
-size_t drcBufferSize;
-void *tvBuffer;
-void *drcBuffer;
+static size_t tvBufferSize;
+static size_t drcBufferSize;
+static void *tvBuffer;
+static void *drcBuffer;
 
 void flipBuffers() {
     DCFlushRange(tvBuffer, tvBufferSize);

@@ -12,7 +12,7 @@ bool isInstalling = false;
 bool isBackup = false;
 
 static const std::string themesPath = "/vol/external01/wiiu/themes/";
-std::vector<std::string> themes;
+static std::vector<std::string> themes;
 
 static VPADStatus status;
 static VPADReadError error;
@@ -146,8 +146,8 @@ auto main() -> int {
 
         header();
 
-        for (int a = 0; a < entrycount; ++a)
-            console_print_pos(1, a + 3, themes[a].c_str());
+        for (int i = 0; i < entrycount; ++i)
+            console_print_pos(1, i + 3, themes[i].c_str());
 
         console_print_pos(0, cursorPosition + 3, ">");
 
