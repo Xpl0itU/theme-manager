@@ -23,10 +23,10 @@ static std::string newlibToFSA(std::string path) {
 
 static uint16_t getCRC(uint8_t *bytes, int length) {
     uint16_t crc = 0x0000;
-    for (int byteIndex = 0; byteIndex < length; byteIndex++)
-        for (int bitIndex = 7; bitIndex >= 0; bitIndex--)
+    for (int byteIndex = 0; byteIndex < length; ++byteIndex)
+        for (int bitIndex = 7; bitIndex >= 0; --bitIndex)
             crc = (((crc << 1) | ((bytes[byteIndex] >> bitIndex) & 0x1)) ^ (((crc & 0x8000) != 0) ? 0x1021 : 0));
-    for (int counter = 16; counter > 0; counter--)
+    for (int counter = 16; counter > 0; --counter)
         crc = ((crc << 1) ^ (((crc & 0x8000) != 0) ? 0x1021 : 0));
 
     return (crc & 0xFFFF);
