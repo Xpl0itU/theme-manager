@@ -66,6 +66,7 @@ void warning() {
 }
 
 void header() {
+    clearBuffersEx();
     if (isBackup) {
         console_print_pos(0, 0, "Backing up current theme...");
         console_print_pos(0, 1, "----------------------------------------------------------------------");
@@ -84,7 +85,6 @@ void header() {
 }
 
 void displayMessage(std::string message) {
-    clearBuffersEx();
     header();
     console_print_pos(0, 5, message.c_str());
     flipBuffers();

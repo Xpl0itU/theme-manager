@@ -1,6 +1,3 @@
-#include <atomic>
-#include <cstring>
-
 #include <coreinit/ios.h>
 #include <vpad/input.h>
 #include <whb/proc.h>
@@ -10,23 +7,22 @@
 #include "hash.h"
 #include "screen.h"
 
-int cursorPosition = 0;
+static int cursorPosition = 0;
 bool isInstalling = false;
 bool isBackup = false;
 
-const std::string themesPath = "/vol/external01/wiiu/themes/";
+static const std::string themesPath = "/vol/external01/wiiu/themes/";
 std::vector<std::string> themes;
 
-VPADStatus status;
-VPADReadError error;
-bool vpad_fatal = false;
+static VPADStatus status;
+static VPADReadError error;
 
-int res;
+static int res;
 int fsaFd;
 
-std::string menuPath;
+static std::string menuPath;
 
-void check() {
+static void check() {
     displayMessage("Checking Men.pack");
     if (hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
         displayMessage("Men.pack hash error");
@@ -40,13 +36,13 @@ void check() {
     }
 }
 
-auto checkBackup() -> int {
+static auto checkBackup() -> int {
     if ((checkEntry(themesPath + "backup/") == 2) && (checkEntry(themesPath + "backup/Men.pack") == 1) && (checkEntry(themesPath + "backup/Men2.pack") == 1))
         return 0;
     return -1;
 }
 
-void backup() {
+static void backup() {
     displayMessage("Backing up Men.pack");
     mkdir_p(themesPath + "backup");
     if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
@@ -71,7 +67,7 @@ void backup() {
     isBackup = false;
 }
 
-void install() {
+static void install() {
     clearBuffersEx();
     if (checkBackup() != 0)
         backup();
@@ -116,7 +112,7 @@ static bool cfwValid() {
 auto main() -> int {
     WHBProcInit();
 
-    if (screenInit() == false) {
+    if (!screenInit()) {
         WHBProcShutdown();
         return 1;
     }
@@ -148,7 +144,6 @@ auto main() -> int {
     while (WHBProcIsRunning()) {
         VPADRead(VPAD_CHAN_0, &status, 1, &error);
 
-        clearBuffersEx();
         header();
 
         for (int a = 0; a < entrycount; ++a)
