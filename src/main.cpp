@@ -4,6 +4,8 @@
 #include <whb/proc.h>
 #include <whb/sdcard.h>
 
+#include <cstring>
+
 #include "fsUtils.h"
 #include "hash.h"
 #include "screen.h"
