@@ -1,5 +1,7 @@
 FROM devkitpro/devkitppc:latest
 
+COPY --from=wiiuenv/libmocha:20220609 /artifacts $DEVKITPRO
+
 RUN git clone https://github.com/devkitPro/wut && \
  cd wut && \
  git checkout cd6b4fb45d054d53af92bc0b3685e8bd9f01445d && \

@@ -43,17 +43,17 @@ DRC_SPLASH	:=
 #-------------------------------------------------------------------------------
 # options for code generation
 #-------------------------------------------------------------------------------
-CFLAGS	:=	-g -std=c++20 -Wall -Ofast -ffunction-sections -fpermissive -pipe \
+CFLAGS	:=	-g -Wall -Ofast -ffunction-sections -fpermissive -pipe \
 			$(MACHDEP)
 
 CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__
 
-CXXFLAGS	:= $(CFLAGS)
+CXXFLAGS	:= $(CFLAGS) -std=c++20
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lwut -liosuhax
+LIBS	:= -lwut -lmocha -liosuhax
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

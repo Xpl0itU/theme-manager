@@ -6,6 +6,8 @@
 
 #include <cstring>
 
+#include <mocha/mocha.h>
+
 #include "fsUtils.h"
 #include "hash.h"
 #include "screen.h"
@@ -90,27 +92,31 @@ static void install() {
     }
 }
 
-static bool cfwValid() {
-    int handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
-    bool ret = handle >= 0;
-    if (ret) {
-        char dummy[0x100];
-        int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
-        ret = IOS_Ioctl(handle, 100, &in, sizeof(in), dummy, sizeof(dummy)) == IOS_ERROR_OK;
-        if (ret) {
-            res = IOSUHAX_Open(NULL);
-            if (res < 0) {
-                promptError("IOSUHAX_Open failed. Please use Tiramisu");
-                return 0;
-            }
-            if (ret)
-                ret = IOSUHAX_read_otp((uint8_t *) dummy, 1) >= 0;
-        }
+static bool cfwValid()
+{
+	bool ret = Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS;
+	if(ret)
+	{
+		char *dummy = (char*)aligned_alloc(0x40, 0x100);
+		ret = dummy != NULL;
+		if(ret)
+		{
+			ret = Mocha_GetEnvironmentPath(dummy, 0x100) == MOCHA_RESULT_SUCCESS;
+			if(ret)
+			{
+				res = IOSUHAX_Open(NULL);
+                if (res < 0) {
+                    promptError("IOSUHAX_Open failed. Please use Tiramisu");
+                    return 0;
+                }
+				if(ret)
+					ret = IOSUHAX_read_otp((uint8_t *)dummy, 1) >= 0;
+			}
+		}
+			free(dummy);
+	}
 
-        IOS_Close(handle);
-    }
-
-    return ret;
+	return ret;
 }
 
 auto main() -> int {
