@@ -9,7 +9,7 @@ RUN git clone https://github.com/devkitPro/wut && \
  make install && \
  cd .. && \
  rm -rf wut && \
- git clone --recursive https://github.com/Crementif/libiosuhax && \
+ git clone --recursive https://github.com/wiiu-env/libiosuhax && \
  cd libiosuhax && \
  make -j$(nproc) && \
  make install && \
