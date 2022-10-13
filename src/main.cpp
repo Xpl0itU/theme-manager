@@ -27,8 +27,7 @@ static VPADStatus status;
 static VPADReadError error;
 KPADStatus kpad_status;
 
-static int res;
-int fsaFd;
+FSCmdBlock cmdBlk;
 
 static std::string menuPath;
 
@@ -41,8 +40,8 @@ bool AppRunning() {
                 app = false;
                 screendeInit();
 
-                unmount_fs("mlc");
-                IOSUHAX_FSA_Close(fsaFd);
+                Mocha_DeInitLibrary();
+                FSShutdown();
                 ProcUIShutdown();
                 break;
             case PROCUI_STATUS_RELEASE_FOREGROUND:
@@ -50,8 +49,8 @@ bool AppRunning() {
                 app = false;
                 screendeInit();
 
-                unmount_fs("mlc");
-                IOSUHAX_FSA_Close(fsaFd);
+                Mocha_DeInitLibrary();
+                FSShutdown();
                 ProcUIDrawDoneRelease();
                 break;
             case PROCUI_STATUS_IN_FOREGROUND:
@@ -130,31 +129,32 @@ static void install() {
     }
 }
 
-static bool cfwValid()
-{
-	bool ret = Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS;
-	if(ret)
-	{
-		char *dummy = (char*)aligned_alloc(0x40, 0x100);
-		ret = dummy != NULL;
-		if(ret)
-		{
-			ret = Mocha_GetEnvironmentPath(dummy, 0x100) == MOCHA_RESULT_SUCCESS;
-			if(ret)
-			{
-				res = IOSUHAX_Open(NULL);
-                if (res < 0) {
-                    promptError("IOSUHAX_Open failed. Please use Tiramisu");
-                    return 0;
-                }
-				if(ret)
-					ret = IOSUHAX_read_otp((uint8_t *)dummy, 1) >= 0;
-			}
-		}
-			free(dummy);
-	}
+static bool cfwValid() {
+    FSInit();
+    FSInitCmdBlock(&cmdBlk);
+    FSSetCmdPriority(&cmdBlk, 0);
+    bool mochaReady = Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS;
+    bool ret = mochaReady;
+    if(ret) {
+        ret = Mocha_UnlockFSClient(__wut_devoptab_fs_client) == MOCHA_RESULT_SUCCESS;
+        if(ret) {
+            WiiUConsoleOTP otp;
+            ret = Mocha_ReadOTP(&otp) == MOCHA_RESULT_SUCCESS;
+            if(ret) {
+                MochaRPXLoadInfo info = {
+                    .target = 0xDEADBEEF,
+                    .filesize = 0,
+                    .fileoffset = 0,
+                    .path = "dummy"
+                };
 
-	return ret;
+                MochaUtilsStatus s = Mocha_LaunchRPX(&info);
+                ret = s != MOCHA_RESULT_UNSUPPORTED_API_VERSION && s != MOCHA_RESULT_UNSUPPORTED_COMMAND;
+            }
+        }
+    }
+
+    return ret;
 }
 
 auto main() -> int {
@@ -173,26 +173,19 @@ auto main() -> int {
     }
 
     if (!cfwValid()) {
-        promptError("This CFW version is not supported, please use Tiramisu or Aroma.");
-        return 0;
-    }
-
-    fsaFd = IOSUHAX_FSA_Open();
-    if (fsaFd < 0) {
-        promptError("IOSUHAX_FSA_Open failed.");
+        promptError("This CFW version is not supported, please use Tiramisu or Aroma.\nOr update your MochaPayload to the latest version.");
         return 0;
     }
 
     WHBMountSdCard();
-    mount_fs("mlc", fsaFd, NULL, "/vol/storage_mlc01");
     themes = listFolders(themesPath);
 
-    if (dirExists("mlc:/sys/title/00050010/10040200"))
-        menuPath = "mlc:/sys/title/00050010/10040200";
-    else if (dirExists("mlc:/sys/title/00050010/10040100"))
-        menuPath = "mlc:/sys/title/00050010/10040100";
-    else if (dirExists("mlc:/sys/title/00050010/10040000"))
-        menuPath = "mlc:/sys/title/00050010/10040000";
+    if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040200"))
+        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040200";
+    else if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040100"))
+        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040100";
+    else if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040000"))
+        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040000";
 
     warning();
 
@@ -241,7 +234,6 @@ auto main() -> int {
 
         if (isInstalling) {
             install();
-            IOSUHAX_FSA_FlushVolume(fsaFd, "/vol/storage_mlc01");
             check();
             isInstalling = false;
         }
@@ -253,12 +245,12 @@ auto main() -> int {
 
         flipBuffers();
     }
-
+/*
     screendeInit();
     WHBProcShutdown();
 
     unmount_fs("mlc");
-    IOSUHAX_FSA_Close(fsaFd);
+    IOSUHAX_FSA_Close(fsaFd);*/
 
     return 0;
 }
