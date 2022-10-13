@@ -1,5 +1,8 @@
+#include <coreinit/core.h>
 #include <coreinit/ios.h>
+#include <coreinit/foreground.h>
 #include <padscore/kpad.h>
+#include <proc_ui/procui.h>
 #include <sndcore2/core.h>
 #include <vpad/input.h>
 #include <whb/proc.h>
@@ -13,7 +16,6 @@
 #include "hash.h"
 #include "input.h"
 #include "screen.h"
-#include "state.h"
 
 static int cursorPosition = 0;
 bool isInstalling = false;
@@ -22,10 +24,38 @@ bool isBackup = false;
 static const std::string themesPath = "/vol/external01/wiiu/themes/";
 static std::vector<std::string> themes;
 
-static int res;
-int fsaFd;
+static VPADStatus status;
+static VPADReadError error;
+KPADStatus kpad_status;
+
+FSCmdBlock cmdBlk;
 
 static std::string menuPath;
+
+bool AppRunning() {
+    bool app = true;
+    if (OSIsMainCore()) {
+        switch (ProcUIProcessMessages(true)) {
+            case PROCUI_STATUS_EXITING:
+                // Being closed, prepare to exit
+                app = false;
+                break;
+            case PROCUI_STATUS_RELEASE_FOREGROUND:
+                // Free up MEM1 to next foreground app, deinit screen, etc.
+                ProcUIDrawDoneRelease();
+                break;
+            case PROCUI_STATUS_IN_FOREGROUND:
+                // Executed while app is in foreground
+                app = true;
+                break;
+            case PROCUI_STATUS_IN_BACKGROUND:
+                OSSleepTicks(OSMillisecondsToTicks(20));
+                break;
+        }
+    }
+
+    return app;
+}
 
 static void check() {
     displayMessage("Checking Men.pack");
@@ -91,38 +121,39 @@ static void install() {
     }
 }
 
-static bool cfwValid()
-{
-	bool ret = Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS;
-	if(ret)
-	{
-		char *dummy = (char*)aligned_alloc(0x40, 0x100);
-		ret = dummy != NULL;
-		if(ret)
-		{
-			ret = Mocha_GetEnvironmentPath(dummy, 0x100) == MOCHA_RESULT_SUCCESS;
-			if(ret)
-			{
-				res = IOSUHAX_Open(NULL);
-                if (res < 0) {
-                    promptError("IOSUHAX_Open failed. Please use Tiramisu");
-                    return 0;
-                }
-				if(ret)
-					ret = IOSUHAX_read_otp((uint8_t *)dummy, 1) >= 0;
-			}
-		}
-			free(dummy);
-	}
+static bool cfwValid() {
+    FSInit();
+    FSInitCmdBlock(&cmdBlk);
+    FSSetCmdPriority(&cmdBlk, 0);
+    bool mochaReady = Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS;
+    bool ret = mochaReady;
+    if(ret) {
+        ret = Mocha_UnlockFSClient(__wut_devoptab_fs_client) == MOCHA_RESULT_SUCCESS;
+        if(ret) {
+            WiiUConsoleOTP otp;
+            ret = Mocha_ReadOTP(&otp) == MOCHA_RESULT_SUCCESS;
+            if(ret) {
+                MochaRPXLoadInfo info = {
+                    .target = 0xDEADBEEF,
+                    .filesize = 0,
+                    .fileoffset = 0,
+                    .path = "dummy"
+                };
 
-	return ret;
+                MochaUtilsStatus s = Mocha_LaunchRPX(&info);
+                ret = s != MOCHA_RESULT_UNSUPPORTED_API_VERSION && s != MOCHA_RESULT_UNSUPPORTED_COMMAND;
+            }
+        }
+    }
+
+    return ret;
 }
 
 auto main() -> int {
     AXInit();
     AXQuit();
-    WHBProcInit();
-    initState();
+    ProcUIInit(&OSSavesDone_ReadyToRelease);
+    OSEnableHomeButtonMenu(true);
     VPADInit();
     WPADInit();
     KPADInit();
@@ -132,28 +163,20 @@ auto main() -> int {
         WHBProcShutdown();
         return 1;
     }
-
     if (!cfwValid()) {
-        promptError("This CFW version is not supported, please use Tiramisu or Aroma.");
-        return 0;
-    }
-
-    fsaFd = IOSUHAX_FSA_Open();
-    if (fsaFd < 0) {
-        promptError("IOSUHAX_FSA_Open failed.");
+        promptError("This CFW version is not supported, please use Tiramisu or Aroma.\nOr update your MochaPayload to the latest version.");
         return 0;
     }
 
     WHBMountSdCard();
-    mount_fs("mlc", fsaFd, NULL, "/vol/storage_mlc01");
     themes = listFolders(themesPath);
 
-    if (dirExists("mlc:/sys/title/00050010/10040200"))
-        menuPath = "mlc:/sys/title/00050010/10040200";
-    else if (dirExists("mlc:/sys/title/00050010/10040100"))
-        menuPath = "mlc:/sys/title/00050010/10040100";
-    else if (dirExists("mlc:/sys/title/00050010/10040000"))
-        menuPath = "mlc:/sys/title/00050010/10040000";
+    if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040200"))
+        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040200";
+    else if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040100"))
+        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040100";
+    else if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040000"))
+        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040000";
 
     warning();
 
@@ -186,7 +209,6 @@ auto main() -> int {
 
         if (isInstalling) {
             install();
-            IOSUHAX_FSA_FlushVolume(fsaFd, "/vol/storage_mlc01");
             check();
             isInstalling = false;
         }
@@ -200,11 +222,9 @@ auto main() -> int {
     }
 
     screendeInit();
-    shutdownState();
-    WHBProcShutdown();
+    Mocha_DeInitLibrary();
+    FSShutdown();
+    ProcUIShutdown();
 
-    unmount_fs("mlc");
-    IOSUHAX_FSA_Close(fsaFd);
-
-    return 1;
+    return 0;
 }
