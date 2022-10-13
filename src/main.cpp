@@ -1,4 +1,6 @@
+#include <coreinit/core.h>
 #include <coreinit/ios.h>
+#include <coreinit/foreground.h>
 #include <padscore/kpad.h>
 #include <proc_ui/procui.h>
 #include <sndcore2/core.h>
@@ -13,7 +15,6 @@
 #include "fsUtils.h"
 #include "hash.h"
 #include "screen.h"
-#include "state.h"
 
 static int cursorPosition = 0;
 bool isInstalling = false;
@@ -32,10 +33,12 @@ int fsaFd;
 static std::string menuPath;
 
 bool AppRunning() {
+    bool app = true;
     if (OSIsMainCore()) {
         switch (ProcUIProcessMessages(true)) {
             case PROCUI_STATUS_EXITING:
                 // Being closed, prepare to exit
+                app = false;
                 screendeInit();
 
                 unmount_fs("mlc");
@@ -44,6 +47,7 @@ bool AppRunning() {
                 break;
             case PROCUI_STATUS_RELEASE_FOREGROUND:
                 // Free up MEM1 to next foreground app, deinit screen, etc.
+                app = false;
                 screendeInit();
 
                 unmount_fs("mlc");
@@ -52,6 +56,7 @@ bool AppRunning() {
                 break;
             case PROCUI_STATUS_IN_FOREGROUND:
                 // Executed while app is in foreground
+                app = true;
                 break;
             case PROCUI_STATUS_IN_BACKGROUND:
                 break;
