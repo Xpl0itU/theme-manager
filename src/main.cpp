@@ -1,4 +1,5 @@
 #include <coreinit/core.h>
+#include <coreinit/dynload.h>
 #include <coreinit/ios.h>
 #include <coreinit/foreground.h>
 #include <padscore/kpad.h>
@@ -24,37 +25,46 @@ bool isBackup = false;
 static const std::string themesPath = "/vol/external01/wiiu/themes/";
 static std::vector<std::string> themes;
 
-static VPADStatus status;
-static VPADReadError error;
-KPADStatus kpad_status;
+static bool aroma;
 
 FSCmdBlock cmdBlk;
 
 static std::string menuPath;
 
-bool AppRunning() {
-    bool app = true;
-    if (OSIsMainCore()) {
-        switch (ProcUIProcessMessages(true)) {
-            case PROCUI_STATUS_EXITING:
-                // Being closed, prepare to exit
-                app = false;
-                break;
-            case PROCUI_STATUS_RELEASE_FOREGROUND:
-                // Free up MEM1 to next foreground app, deinit screen, etc.
-                ProcUIDrawDoneRelease();
-                break;
-            case PROCUI_STATUS_IN_FOREGROUND:
-                // Executed while app is in foreground
-                app = true;
-                break;
-            case PROCUI_STATUS_IN_BACKGROUND:
-                OSSleepTicks(OSMillisecondsToTicks(20));
-                break;
-        }
-    }
+bool isAroma() {
+    OSDynLoad_Module mod;
+    aroma = OSDynLoad_Acquire("homebrew_kernel", &mod) == OS_DYNLOAD_OK;
+    if (aroma)
+        OSDynLoad_Release(mod);
+    return aroma;
+}
 
-    return app;
+static bool AppRunning() {
+    if(isAroma()) {
+        bool app = true;
+        if (OSIsMainCore()) {
+            switch (ProcUIProcessMessages(true)) {
+                case PROCUI_STATUS_EXITING:
+                    // Being closed, prepare to exit
+                    app = false;
+                    break;
+                case PROCUI_STATUS_RELEASE_FOREGROUND:
+                    // Free up MEM1 to next foreground app, deinit screen, etc.
+                    ProcUIDrawDoneRelease();
+                    break;
+                case PROCUI_STATUS_IN_FOREGROUND:
+                    // Executed while app is in foreground
+                    app = true;
+                    break;
+                case PROCUI_STATUS_IN_BACKGROUND:
+                    OSSleepTicks(OSMillisecondsToTicks(20));
+                    break;
+            }
+        }
+
+        return app;
+    }
+    return WHBProcIsRunning();
 }
 
 static void check() {
@@ -152,8 +162,11 @@ static bool cfwValid() {
 auto main() -> int {
     AXInit();
     AXQuit();
-    ProcUIInit(&OSSavesDone_ReadyToRelease);
-    OSEnableHomeButtonMenu(true);
+    if(isAroma()) {
+        ProcUIInit(&OSSavesDone_ReadyToRelease);
+        OSEnableHomeButtonMenu(true);
+    } else
+        WHBProcInit();
     VPADInit();
     WPADInit();
     KPADInit();
@@ -165,7 +178,7 @@ auto main() -> int {
     }
     if (!cfwValid()) {
         promptError("This CFW version is not supported, please use Tiramisu or Aroma.\nOr update your MochaPayload to the latest version.");
-        return 0;
+        return 1;
     }
 
     WHBMountSdCard();
@@ -224,6 +237,8 @@ auto main() -> int {
     screendeInit();
     Mocha_DeInitLibrary();
     FSShutdown();
+    if(!isAroma())
+        WHBProcShutdown();
     ProcUIShutdown();
 
     return 0;

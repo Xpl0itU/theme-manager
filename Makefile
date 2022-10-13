@@ -149,6 +149,14 @@ clean:
 	@rm -fr $(BUILD) $(TARGET).wuhb $(TARGET).rpx $(TARGET).elf
 
 #-------------------------------------------------------------------------------
+release: $(BUILD)
+	@mkdir -p theme-manager
+	@cp theme-manager.rpx theme-manager
+	@cp meta/icon.png theme-manager
+	@cp meta/meta.xml theme-manager
+	@zip -9 -r theme-manager.zip theme-manager
+	@rm -rf theme-manager
+#-------------------------------------------------------------------------------
 else
 .PHONY:	all
 
