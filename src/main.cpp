@@ -38,19 +38,9 @@ bool AppRunning() {
             case PROCUI_STATUS_EXITING:
                 // Being closed, prepare to exit
                 app = false;
-                screendeInit();
-
-                Mocha_DeInitLibrary();
-                FSShutdown();
-                ProcUIShutdown();
                 break;
             case PROCUI_STATUS_RELEASE_FOREGROUND:
                 // Free up MEM1 to next foreground app, deinit screen, etc.
-                app = false;
-                screendeInit();
-
-                Mocha_DeInitLibrary();
-                FSShutdown();
                 ProcUIDrawDoneRelease();
                 break;
             case PROCUI_STATUS_IN_FOREGROUND:
@@ -58,6 +48,7 @@ bool AppRunning() {
                 app = true;
                 break;
             case PROCUI_STATUS_IN_BACKGROUND:
+                OSSleepTicks(OSMillisecondsToTicks(20));
                 break;
         }
     }
@@ -160,8 +151,8 @@ static bool cfwValid() {
 auto main() -> int {
     AXInit();
     AXQuit();
-    WHBProcInit();
     ProcUIInit(&OSSavesDone_ReadyToRelease);
+    OSEnableHomeButtonMenu(true);
     VPADInit();
     WPADInit();
     KPADInit();
@@ -171,7 +162,6 @@ auto main() -> int {
         WHBProcShutdown();
         return 1;
     }
-
     if (!cfwValid()) {
         promptError("This CFW version is not supported, please use Tiramisu or Aroma.\nOr update your MochaPayload to the latest version.");
         return 0;
@@ -245,12 +235,11 @@ auto main() -> int {
 
         flipBuffers();
     }
-/*
-    screendeInit();
-    WHBProcShutdown();
 
-    unmount_fs("mlc");
-    IOSUHAX_FSA_Close(fsaFd);*/
+    screendeInit();
+    Mocha_DeInitLibrary();
+    FSShutdown();
+    ProcUIShutdown();
 
     return 0;
 }
