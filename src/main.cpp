@@ -1,5 +1,6 @@
 #include <coreinit/ios.h>
 #include <padscore/kpad.h>
+#include <sndcore2/core.h>
 #include <vpad/input.h>
 #include <whb/proc.h>
 #include <whb/sdcard.h>
@@ -121,6 +122,8 @@ static bool cfwValid()
 }
 
 auto main() -> int {
+    AXInit();
+    AXQuit();
     WHBProcInit();
     initState();
     VPADInit();
