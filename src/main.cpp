@@ -134,7 +134,7 @@ auto main() -> int {
     }
 
     if (!cfwValid()) {
-        promptError("This CFW version is not supported, please use Tiramisu.");
+        promptError("This CFW version is not supported, please use Tiramisu or Aroma.");
         return 0;
     }
 
