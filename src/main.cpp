@@ -1,5 +1,6 @@
 #include <coreinit/ios.h>
 #include <padscore/kpad.h>
+#include <proc_ui/procui.h>
 #include <sndcore2/core.h>
 #include <vpad/input.h>
 #include <whb/proc.h>
@@ -29,6 +30,36 @@ static int res;
 int fsaFd;
 
 static std::string menuPath;
+
+bool AppRunning() {
+    if (OSIsMainCore()) {
+        switch (ProcUIProcessMessages(true)) {
+            case PROCUI_STATUS_EXITING:
+                // Being closed, prepare to exit
+                screendeInit();
+
+                unmount_fs("mlc");
+                IOSUHAX_FSA_Close(fsaFd);
+                ProcUIShutdown();
+                break;
+            case PROCUI_STATUS_RELEASE_FOREGROUND:
+                // Free up MEM1 to next foreground app, deinit screen, etc.
+                screendeInit();
+
+                unmount_fs("mlc");
+                IOSUHAX_FSA_Close(fsaFd);
+                ProcUIDrawDoneRelease();
+                break;
+            case PROCUI_STATUS_IN_FOREGROUND:
+                // Executed while app is in foreground
+                break;
+            case PROCUI_STATUS_IN_BACKGROUND:
+                break;
+        }
+    }
+
+    return app;
+}
 
 static void check() {
     displayMessage("Checking Men.pack");
@@ -125,7 +156,7 @@ auto main() -> int {
     AXInit();
     AXQuit();
     WHBProcInit();
-    initState();
+    ProcUIInit(&OSSavesDone_ReadyToRelease);
     VPADInit();
     WPADInit();
     KPADInit();
@@ -219,11 +250,10 @@ auto main() -> int {
     }
 
     screendeInit();
-    shutdownState();
     WHBProcShutdown();
 
     unmount_fs("mlc");
     IOSUHAX_FSA_Close(fsaFd);
 
-    return 1;
+    return 0;
 }
