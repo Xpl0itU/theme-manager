@@ -11,6 +11,7 @@
 #include "fsUtils.h"
 #include "hash.h"
 #include "screen.h"
+#include "state.h"
 
 static int cursorPosition = 0;
 bool isInstalling = false;
@@ -121,6 +122,7 @@ static bool cfwValid()
 
 auto main() -> int {
     WHBProcInit();
+    initState();
     VPADInit();
     WPADInit();
     KPADInit();
@@ -155,7 +157,7 @@ auto main() -> int {
 
     warning();
 
-    while (WHBProcIsRunning()) {
+    while (AppRunning()) {
         VPADRead(VPAD_CHAN_0, &status, 1, &error);
         memset(&kpad_status, 0, sizeof(KPADStatus));
         WPADExtensionType controllerType;
@@ -214,6 +216,7 @@ auto main() -> int {
     }
 
     screendeInit();
+    shutdownState();
     WHBProcShutdown();
 
     unmount_fs("mlc");

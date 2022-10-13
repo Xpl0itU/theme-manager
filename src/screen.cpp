@@ -96,8 +96,6 @@ void screendeInit() {
     if (drcBuffer != nullptr)
         free(drcBuffer);
 
-    OSScreenShutdown();
-
     return;
 }
 
