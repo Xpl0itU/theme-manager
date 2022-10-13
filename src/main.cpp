@@ -11,6 +11,7 @@
 
 #include "fsUtils.h"
 #include "hash.h"
+#include "input.h"
 #include "screen.h"
 #include "state.h"
 
@@ -20,10 +21,6 @@ bool isBackup = false;
 
 static const std::string themesPath = "/vol/external01/wiiu/themes/";
 static std::vector<std::string> themes;
-
-static VPADStatus status;
-static VPADReadError error;
-KPADStatus kpad_status;
 
 static int res;
 int fsaFd;
@@ -160,16 +157,10 @@ auto main() -> int {
 
     warning();
 
+    Input input;
+
     while (AppRunning()) {
-        VPADRead(VPAD_CHAN_0, &status, 1, &error);
-        memset(&kpad_status, 0, sizeof(KPADStatus));
-        WPADExtensionType controllerType;
-        for (int i = 0; i < 4; i++) {
-            if (WPADProbe((WPADChan) i, &controllerType) == 0) {
-                KPADRead((WPADChan) i, &kpad_status, 1);
-                break;
-            }
-        }
+        input.read();
 
         header();
 
@@ -178,26 +169,16 @@ auto main() -> int {
 
         console_print_pos(0, cursorPosition + 3, ">");
 
-        if ((status.trigger & (VPAD_BUTTON_DOWN | VPAD_STICK_L_EMULATION_DOWN)) |
-            (kpad_status.trigger & (WPAD_BUTTON_DOWN)) |
-            (kpad_status.classic.trigger & (WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_STICK_L_EMULATION_DOWN)) |
-            (kpad_status.pro.trigger & (WPAD_PRO_BUTTON_DOWN | WPAD_PRO_STICK_L_EMULATION_DOWN)))
+        if (input.get(TRIGGER, PAD_BUTTON_DOWN))
             ++cursorPosition;
 
-        if ((status.trigger & (VPAD_BUTTON_UP | VPAD_STICK_L_EMULATION_UP)) |
-            (kpad_status.trigger & (WPAD_BUTTON_UP)) |
-            (kpad_status.classic.trigger & (WPAD_CLASSIC_BUTTON_UP | WPAD_CLASSIC_STICK_L_EMULATION_UP)) |
-            (kpad_status.pro.trigger & (WPAD_PRO_BUTTON_UP | WPAD_PRO_STICK_L_EMULATION_UP)))
+        if (input.get(TRIGGER, PAD_BUTTON_UP))
             --cursorPosition;
 
-        if ((status.trigger & VPAD_BUTTON_A) |
-            ((kpad_status.trigger & (WPAD_BUTTON_A)) | (kpad_status.classic.trigger & (WPAD_CLASSIC_BUTTON_A)) |
-            (kpad_status.pro.trigger & (WPAD_PRO_BUTTON_A))))
+        if (input.get(TRIGGER, PAD_BUTTON_A))
             isInstalling = true;
 
-        if ((status.trigger & VPAD_BUTTON_R) | (kpad_status.trigger & (WPAD_BUTTON_PLUS)) |
-            (kpad_status.classic.trigger & (WPAD_CLASSIC_BUTTON_R)) |
-            (kpad_status.pro.trigger & (WPAD_PRO_TRIGGER_R)))
+        if (input.get(TRIGGER, PAD_BUTTON_R))
             isBackup = true;
 
         if (isBackup && !isInstalling)
