@@ -90,22 +90,22 @@ static auto checkBackup() -> int {
 static void backup() {
     displayMessage("Backing up Men.pack");
     mkdir_p(themesPath + "backup");
-    if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
+    if (copyFile(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != true) {
         displayMessage("Men.pack error");
         sleep(2);
     }
     displayMessage("Backing up Men2.pack");
-    if (copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
+    if (copyFile(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != true) {
         displayMessage("Men2.pack error");
         sleep(2);
     }
     displayMessage("Checking Men.pack");
-    if (hashFiles(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != 0) {
+    if (hashFiles(menuPath + "/content/Common/Package/Men.pack", themesPath + "backup/Men.pack") != true) {
         displayMessage("Men.pack hash error");
         sleep(2);
     }
     displayMessage("Checking Men2.pack");
-    if (hashFiles(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != 0) {
+    if (hashFiles(menuPath + "/content/Common/Package/Men2.pack", themesPath + "backup/Men2.pack") != true) {
         displayMessage("Men2.pack hash error");
         sleep(2);
     }
@@ -117,12 +117,12 @@ static void install() {
     if (checkBackup() != 0)
         backup();
     displayMessage("Copying Men.pack");
-    if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
+    if (copyFile(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != true) {
         displayMessage("Men.pack error");
         sleep(2);
     }
     displayMessage("Copying Men2.pack");
-    if (copyFile(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") == 0) {
+    if (copyFile(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") == true) {
         displayMessage("Theme installed.");
         sleep(2);
     } else {

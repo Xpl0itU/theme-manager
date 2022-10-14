@@ -8,5 +8,5 @@
 
 extern int fsaFd;
 
-auto copyFile(const std::string &pPath, const std::string &oPath) -> int;
+bool copyFile(const std::string &pPath, const std::string &oPath);
 auto hashFiles(const std::string &file1, const std::string &file2) -> int;
