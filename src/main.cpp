@@ -31,7 +31,7 @@ FSCmdBlock cmdBlk;
 
 static std::string menuPath;
 
-bool isAroma() {
+static bool isAroma() {
     OSDynLoad_Module mod;
     aroma = OSDynLoad_Acquire("homebrew_kernel", &mod) == OS_DYNLOAD_OK;
     if (aroma)
@@ -144,7 +144,7 @@ static bool cfwValid() {
             ret = Mocha_ReadOTP(&otp) == MOCHA_RESULT_SUCCESS;
             if(ret) {
                 MochaRPXLoadInfo info = {
-                    .target = 0xDEADBEEF,
+                    .target = (LoadRPXTargetEnum) 0xDEADBEEF,
                     .filesize = 0,
                     .fileoffset = 0,
                     .path = "dummy"

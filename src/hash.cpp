@@ -3,14 +3,6 @@
 
 #define IO_MAX_FILE_BUFFER (1024 * 1024) // 1 MB
 
-bool replace(std::string &str, const std::string &from, const std::string &to) {
-    size_t start_pos = str.find(from);
-    if (start_pos == std::string::npos)
-        return false;
-    str.replace(start_pos, from.length(), to);
-    return true;
-}
-
 static uint16_t getCRC(uint8_t *bytes, int length) {
     uint16_t crc = 0x0000;
     for (int byteIndex = 0; byteIndex < length; ++byteIndex)
