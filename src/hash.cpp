@@ -114,10 +114,13 @@ static auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
         if (*buf != nullptr) {
             if (fread(*buf, size, 1, file) == 1)
                 ret = size;
-            else
+            else {
                 free(*buf);
+                ret = -1;
+            }
         }
         fclose(file);
+        OSMemoryBarrier();
     }
     return ret;
 }
@@ -125,13 +128,15 @@ static auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
 auto hashFiles(const std::string &file1, const std::string &file2) -> int {
     uint8_t *file1Buf = nullptr;
     uint8_t *file2Buf = nullptr;
-    int32_t file1Size = loadFile(file1, &file1Buf);
-    int32_t file2Size = loadFile(file2, &file2Buf);
-    if (getCRC(file1Buf, file1Size) == getCRC(file2Buf, file2Size)) {
-        free(file1Buf);
-        free(file2Buf);
-        return 0;
-    }
+    int32_t file1Size;
+    int32_t file2Size;
+    if((file1Size = loadFile(file1, &file1Buf)) != -1)
+        if((file2Size = loadFile(file2, &file2Buf)) != -1)
+            if (getCRC(file1Buf, file1Size) == getCRC(file2Buf, file2Size)) {
+                free(file1Buf);
+                free(file2Buf);
+                return 0;
+            }
 
     free(file1Buf);
     free(file2Buf);
