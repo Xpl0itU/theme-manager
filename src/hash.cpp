@@ -74,6 +74,7 @@ static bool copyFileThreaded(FILE *srcFile, FILE *dstFile, size_t totalSize) {
     std::future<bool> readFut = std::async(std::launch::async, readThread, srcFile, &read, &write);
     std::future<bool> writeFut = std::async(std::launch::async, writeThread, dstFile, &write, &read, totalSize);
     bool success = readFut.get() && writeFut.get();
+    OSMemoryBarrier();
     return success;
 }
 
