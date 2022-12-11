@@ -1,4 +1,5 @@
 #include <future>
+#include <coreinit/cache.h>
 #include "hash.h"
 #include "fsUtils.h"
 #include "LockingQueue.h"
@@ -118,7 +119,8 @@ static auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
                 free(*buf);
                 ret = -1;
             }
-        }
+        } else
+            ret = 1;
         fclose(file);
         OSMemoryBarrier();
     }
