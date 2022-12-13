@@ -135,6 +135,8 @@ static bool cfwValid() {
     FSInit();
     FSInitCmdBlock(&cmdBlk);
     FSSetCmdPriority(&cmdBlk, 0);
+    return true;
+    /*
     bool mochaReady = Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS;
     bool ret = mochaReady;
     if(ret) {
@@ -156,7 +158,7 @@ static bool cfwValid() {
         }
     }
 
-    return ret;
+    return ret;*/
 }
 
 auto main() -> int {
