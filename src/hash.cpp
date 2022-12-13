@@ -1,5 +1,7 @@
 #include <future>
 #include <coreinit/cache.h>
+#include <cstring>
+#include <mbedtls/md5.h>
 #include "hash.h"
 #include "fsUtils.h"
 #include "LockingQueue.h"
@@ -16,15 +18,29 @@ static file_buffer buffers[16];
 static char *fileBuf[2];
 static bool buffersInitialized = false;
 
-static uint16_t getCRC(uint8_t *bytes, int length) {
-    uint16_t crc = 0x0000;
-    for (int byteIndex = 0; byteIndex < length; ++byteIndex)
-        for (int bitIndex = 7; bitIndex >= 0; --bitIndex)
-            crc = (((crc << 1) | ((bytes[byteIndex] >> bitIndex) & 0x1)) ^ (((crc & 0x8000) != 0) ? 0x1021 : 0));
-    for (int counter = 16; counter > 0; --counter)
-        crc = ((crc << 1) ^ (((crc & 0x8000) != 0) ? 0x1021 : 0));
-
-    return (crc & 0xFFFF);
+static char *hash_file_md5(const char *path) {
+    FILE *fp = fopen(path, "rb");
+    if (fp == NULL) {
+        return NULL;
+    }
+    mbedtls_md5_context ctx;
+    mbedtls_md5_init(&ctx);
+    mbedtls_md5_starts(&ctx);
+    unsigned char buf[1024];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
+        mbedtls_md5_update(&ctx, buf, n);
+    }
+    unsigned char output[16];
+    mbedtls_md5_finish(&ctx, output);
+    mbedtls_md5_free(&ctx);
+    fclose(fp);
+    char *result = (char *)malloc(33);
+    for (int i = 0; i < 16; i++) {
+        sprintf(result + i * 2, "%02x", output[i]);
+    }
+    result[32] = '\0';
+    return result;
 }
 
 static bool readThread(FILE *srcFile, LockingQueue<file_buffer> *ready, LockingQueue<file_buffer> *done) {
@@ -104,44 +120,15 @@ bool copyFile(const std::string &pPath, const std::string &oPath) {
     return true;
 }
 
-static auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
-    int ret = 0;
-    FILE *file = fopen(fPath.c_str(), "rb");
-    if (file != nullptr) {
-        struct stat st {};
-        stat(fPath.c_str(), &st);
-        int size = st.st_size;
-
-        *buf = static_cast<uint8_t *>(malloc(size));
-        if (*buf != nullptr) {
-            if (fread(*buf, size, 1, file) == 1)
-                ret = size;
-            else {
-                free(*buf);
-                ret = -1;
-            }
-        } else
-            ret = 1;
-        fclose(file);
-        OSMemoryBarrier();
+bool hashFiles(const std::string &file1, const std::string &file2) {
+    char *file1Hash = hash_file_md5(file1.c_str());
+    char *file2Hash = hash_file_md5(file2.c_str());
+    if (strcmp(file1Hash, file2Hash) == 0) {
+        free(file1Hash);
+        free(file2Hash);
+        return true;
     }
-    return ret;
-}
-
-auto hashFiles(const std::string &file1, const std::string &file2) -> int {
-    uint8_t *file1Buf = nullptr;
-    uint8_t *file2Buf = nullptr;
-    int32_t file1Size;
-    int32_t file2Size;
-    if((file1Size = loadFile(file1, &file1Buf)) != -1)
-        if((file2Size = loadFile(file2, &file2Buf)) != -1)
-            if (getCRC(file1Buf, file1Size) == getCRC(file2Buf, file2Size)) {
-                free(file1Buf);
-                free(file2Buf);
-                return 0;
-            }
-
-    free(file1Buf);
-    free(file2Buf);
-    return 1;
+    free(file1Hash);
+    free(file2Hash);
+    return false;
 }

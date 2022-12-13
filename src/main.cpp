@@ -69,13 +69,13 @@ static bool AppRunning() {
 
 static void check() {
     displayMessage("Checking Men.pack");
-    if (hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != 0) {
+    if (hashFiles(themesPath + themes[cursorPosition] + "/Men.pack", menuPath + "/content/Common/Package/Men.pack") != true) {
         displayMessage("Men.pack hash error");
         sleep(2);
     }
 
     displayMessage("Checking Men2.pack");
-    if (hashFiles(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") != 0) {
+    if (hashFiles(themesPath + themes[cursorPosition] + "/Men2.pack", menuPath + "/content/Common/Package/Men2.pack") != true) {
         displayMessage("Men2.pack hash error");
         sleep(2);
     }

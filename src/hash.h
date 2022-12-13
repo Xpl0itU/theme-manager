@@ -9,4 +9,4 @@
 extern int fsaFd;
 
 bool copyFile(const std::string &pPath, const std::string &oPath);
-auto hashFiles(const std::string &file1, const std::string &file2) -> int;
+bool hashFiles(const std::string &file1, const std::string &file2);

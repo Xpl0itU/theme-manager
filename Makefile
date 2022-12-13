@@ -53,7 +53,7 @@ CXXFLAGS	:= $(CFLAGS) -std=c++20
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lwut -lmocha
+LIBS	:= -lwut -lmocha -lmbedtls -lmbedx509 -lmbedcrypto
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
