@@ -99,14 +99,15 @@ static auto loadFile(const std::string &fPath, uint8_t **buf) -> int32_t {
     return ret;
 }
 
-auto hashFiles(const std::string &file1, const std::string &file2) -> int {
+bool hashFiles(const std::string &file1, const std::string &file2) {
     char *file1Hash = hash_file_md5(file1.c_str());
     char *file2Hash = hash_file_md5(file2.c_str());
-    char message[1024];
-    sprintf(message, "file1Hash: %s\nfile2Hash: %s", file1Hash, file2Hash);
-    OSConsoleWrite(message, strlen(message));
     if (strcmp(file1Hash, file2Hash) == 0) {
-        return 0;
+        free(file1Hash);
+        free(file2Hash);
+        return true;
     }
-    return 1;
+    free(file1Hash);
+    free(file2Hash);
+    return false;
 }
