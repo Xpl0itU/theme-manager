@@ -27,9 +27,9 @@ static std::vector<std::string> themes;
 
 static bool aroma;
 
-FSCmdBlock cmdBlk;
-
 static std::string menuPath;
+
+FSAClientHandle fsClient;
 
 static bool isAroma() {
     OSDynLoad_Module mod;
@@ -132,14 +132,14 @@ static void install() {
 }
 
 static bool cfwValid() {
-    FSInit();
-    FSInitCmdBlock(&cmdBlk);
-    FSSetCmdPriority(&cmdBlk, 0);
+    FSAInit();
+    fsClient = FSAAddClient(nullptr);
     bool mochaReady = Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS;
     bool ret = mochaReady;
     if(ret) {
-        ret = Mocha_UnlockFSClient(__wut_devoptab_fs_client) == MOCHA_RESULT_SUCCESS;
+        ret = Mocha_UnlockFSClientEx(fsClient) == MOCHA_RESULT_SUCCESS;
         if(ret) {
+            Mocha_MountFS("storage_mlc01", nullptr, "/vol/storage_mlc01");
             WiiUConsoleOTP otp;
             ret = Mocha_ReadOTP(&otp) == MOCHA_RESULT_SUCCESS;
             if(ret) {
@@ -184,12 +184,12 @@ auto main() -> int {
     WHBMountSdCard();
     themes = listFolders(themesPath);
 
-    if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040200"))
-        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040200";
-    else if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040100"))
-        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040100";
-    else if (dirExists("/vol/storage_mlc01/sys/title/00050010/10040000"))
-        menuPath = "/vol/storage_mlc01/sys/title/00050010/10040000";
+    if (dirExists("storage_mlc01:/sys/title/00050010/10040200"))
+        menuPath = "storage_mlc01:/sys/title/00050010/10040200";
+    else if (dirExists("storage_mlc01:/sys/title/00050010/10040100"))
+        menuPath = "storage_mlc01:/sys/title/00050010/10040100";
+    else if (dirExists("storage_mlc01:/sys/title/00050010/10040000"))
+        menuPath = "storage_mlc01:/sys/title/00050010/10040000";
 
     warning();
 
@@ -236,7 +236,8 @@ auto main() -> int {
 
     screendeInit();
     Mocha_DeInitLibrary();
-    FSShutdown();
+    FSADelClient(fsClient);
+    FSAShutdown();
     if(!isAroma())
         WHBProcShutdown();
     ProcUIShutdown();

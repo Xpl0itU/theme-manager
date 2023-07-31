@@ -2,6 +2,7 @@
 #include <coreinit/cache.h>
 #include <cstring>
 #include <mbedtls/md5.h>
+#include <sys/stat.h>
 #include "hash.h"
 #include "fsUtils.h"
 #include "LockingQueue.h"
@@ -112,7 +113,7 @@ bool copyFile(const std::string &pPath, const std::string &oPath) {
 
     copyFileThreaded(source, dest, sizef);
 
-    FSChangeMode(__wut_devoptab_fs_client, &cmdBlk, (char *) oPath.c_str(), (FSMode) 0x644, (FSMode) 0x777, FS_ERROR_FLAG_ALL);
+    chmod(oPath.c_str(), 0x644);
 
     fclose(source);
     fclose(dest);
