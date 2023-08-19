@@ -113,7 +113,7 @@ bool copyFile(const std::string &pPath, const std::string &oPath) {
 
     copyFileThreaded(source, dest, sizef);
 
-    chmod(oPath.c_str(), 0x644);
+    chmod(oPath.c_str(), 0x660);
 
     fclose(source);
     fclose(dest);
